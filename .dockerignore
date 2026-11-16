@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+.env
+.env.*
+**/__pycache__
+.pytest_cache
+.ruff_cache
+data
+docs
+design-concept
+reports
+tests
+web
+extension
+*.db
