@@ -1,0 +1,36 @@
+{
+  "name": "legitcheck-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "copy-metrics": "node scripts/copy-metrics.mjs",
+    "predev": "npm run copy-metrics",
+    "dev": "next dev",
+    "prebuild": "npm run copy-metrics",
+    "build": "next build",
+    "start": "npx serve out",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run copy-metrics",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "geist": "1.9.2",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.5",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}

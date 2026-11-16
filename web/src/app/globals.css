@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@import "../styles/concept.css" layer(components);
+@import "../styles/app.css" layer(components);
+
+/* Expose the design tokens to Tailwind utilities (bg-paper, text-ink-2, border-line, rounded-md...). */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-accent: var(--accent);
+  --color-high: var(--high);
+  --color-warn: var(--warn);
+  --color-ok: var(--ok);
+  --font-sans: var(--font);
+  --font-mono: var(--mono);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+}
