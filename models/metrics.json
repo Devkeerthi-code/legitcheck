@@ -1,0 +1,330 @@
+{
+  "model_version": "1.0.0",
+  "dataset": {
+    "file_sha256": "59253295129d8b6a27607f9904f7d4ddf4dbb0ee35e079c7eb51b58b5e62bf60",
+    "rows_raw": 17880,
+    "rows_after_dedupe": 15680,
+    "duplicate_groups_with_conflicting_labels": 0,
+    "fake_rate": 0.045,
+    "split_sizes": {
+      "train": 10976,
+      "val": 2352,
+      "test": 2352
+    },
+    "split_positives": {
+      "train": 493,
+      "val": 106,
+      "test": 106
+    },
+    "test_ids_fingerprint": "4a74d6de91843dc1",
+    "seed": 42
+  },
+  "lr_c_search_val_pr_auc": {
+    "0.5": 0.8449,
+    "2.0": 0.8648,
+    "8.0": 0.8742,
+    "32.0": 0.8785
+  },
+  "validation": {
+    "tfidf_logreg": {
+      "pr_auc": 0.878453,
+      "roc_auc": 0.983514,
+      "brier": 0.012473,
+      "recall_at_90_precision": 0.716981
+    },
+    "gbm_text_features": {
+      "pr_auc": 0.339016,
+      "roc_auc": 0.779724,
+      "brier": 0.039339,
+      "recall_at_90_precision": 0.122642
+    },
+    "gbm_text_plus_structured": {
+      "pr_auc": 0.567422,
+      "roc_auc": 0.924049,
+      "brier": 0.030738,
+      "recall_at_90_precision": 0.113208
+    },
+    "blend_logreg_gbm_text": {
+      "pr_auc": 0.862774,
+      "roc_auc": 0.975361,
+      "brier": 0.01911,
+      "recall_at_90_precision": 0.726415
+    }
+  },
+  "chosen_model": "tfidf_logreg",
+  "thresholds": {
+    "warn": 0.045893,
+    "high": 0.4851,
+    "rule": "high: precision>=0.9 on val; warn: recall>=0.9 on val"
+  },
+  "test": {
+    "tfidf_logreg": {
+      "pr_auc": 0.879219,
+      "roc_auc": 0.974991,
+      "brier": 0.011596,
+      "recall_at_90_precision": 0.801887
+    },
+    "gbm_text_features": {
+      "pr_auc": 0.337104,
+      "roc_auc": 0.786717,
+      "brier": 0.039206,
+      "recall_at_90_precision": 0.066038
+    },
+    "gbm_text_plus_structured": {
+      "pr_auc": 0.525392,
+      "roc_auc": 0.914439,
+      "brier": 0.034151,
+      "recall_at_90_precision": 0.226415
+    },
+    "blend_logreg_gbm_text": {
+      "pr_auc": 0.850129,
+      "roc_auc": 0.979561,
+      "brier": 0.017931,
+      "recall_at_90_precision": 0.783019
+    }
+  },
+  "test_chosen_at_thresholds": {
+    "warn": {
+      "threshold": 0.045893,
+      "precision": 0.48,
+      "recall": 0.90566,
+      "tn": 2142,
+      "fp": 104,
+      "fn": 10,
+      "tp": 96
+    },
+    "high": {
+      "threshold": 0.4851,
+      "precision": 0.903226,
+      "recall": 0.792453,
+      "tn": 2237,
+      "fp": 9,
+      "fn": 22,
+      "tp": 84
+    }
+  },
+  "test_baselines": {
+    "always_genuine_accuracy": 0.9549,
+    "random_pr_auc": 0.0451
+  },
+  "synthetic_india": {
+    "note": "SYNTHETIC examples written for this project, not real data.",
+    "dev": {
+      "scam": {
+        "model_only": {
+          "flagged": 20,
+          "total": 24,
+          "rate": 0.8333
+        },
+        "rules_only": {
+          "flagged": 24,
+          "total": 24,
+          "rate": 1.0
+        },
+        "combined": {
+          "flagged": 24,
+          "total": 24,
+          "rate": 1.0
+        }
+      },
+      "genuine": {
+        "model_only": {
+          "flagged": 12,
+          "total": 16,
+          "rate": 0.75
+        },
+        "rules_only": {
+          "flagged": 0,
+          "total": 16,
+          "rate": 0.0
+        },
+        "combined": {
+          "flagged": 0,
+          "total": 16,
+          "rate": 0.0
+        }
+      }
+    },
+    "holdout": {
+      "scam": {
+        "model_only": {
+          "flagged": 7,
+          "total": 14,
+          "rate": 0.5
+        },
+        "rules_only": {
+          "flagged": 13,
+          "total": 14,
+          "rate": 0.9286
+        },
+        "combined": {
+          "flagged": 13,
+          "total": 14,
+          "rate": 0.9286
+        }
+      },
+      "genuine": {
+        "model_only": {
+          "flagged": 7,
+          "total": 10,
+          "rate": 0.7
+        },
+        "rules_only": {
+          "flagged": 0,
+          "total": 10,
+          "rate": 0.0
+        },
+        "combined": {
+          "flagged": 0,
+          "total": 10,
+          "rate": 0.0
+        }
+      }
+    },
+    "model_scores": {
+      "syn-001": 0.1674,
+      "syn-002": 0.592856,
+      "syn-003": 0.037523,
+      "syn-004": 0.280644,
+      "syn-005": 0.142667,
+      "syn-006": 0.091137,
+      "syn-007": 0.14254,
+      "syn-008": 0.645817,
+      "syn-009": 0.088059,
+      "syn-010": 0.034432,
+      "syn-011": 0.649689,
+      "syn-012": 0.556814,
+      "syn-013": 0.663542,
+      "syn-014": 0.964193,
+      "syn-015": 0.161174,
+      "syn-016": 0.011631,
+      "syn-017": 0.064377,
+      "syn-018": 0.098902,
+      "syn-019": 0.113018,
+      "syn-020": 0.426908,
+      "syn-021": 0.06424,
+      "syn-022": 0.060713,
+      "syn-023": 0.029985,
+      "syn-024": 0.276913,
+      "syn-025": 0.071685,
+      "syn-026": 0.015468,
+      "syn-027": 0.063186,
+      "syn-028": 0.231637,
+      "syn-029": 0.278979,
+      "syn-030": 0.086112,
+      "syn-031": 0.00579,
+      "syn-032": 0.082116,
+      "syn-033": 0.173526,
+      "syn-034": 0.466748,
+      "syn-035": 0.044418,
+      "syn-036": 0.260947,
+      "syn-037": 0.005459,
+      "syn-038": 0.059673,
+      "syn-039": 0.229623,
+      "syn-040": 0.147883,
+      "syn-041": 0.007244,
+      "syn-042": 0.086225,
+      "syn-043": 0.006863,
+      "syn-044": 0.009459,
+      "syn-045": 0.00844,
+      "syn-046": 0.489843,
+      "syn-047": 0.019989,
+      "syn-048": 0.975652,
+      "syn-049": 0.020677,
+      "syn-050": 0.090245,
+      "syn-051": 0.033978,
+      "syn-052": 0.138616,
+      "syn-053": 0.171095,
+      "syn-054": 0.052545,
+      "syn-055": 0.271292,
+      "syn-056": 0.004458,
+      "syn-057": 0.376299,
+      "syn-058": 0.038041,
+      "syn-059": 0.265907,
+      "syn-060": 0.055598,
+      "syn-061": 0.106598,
+      "syn-062": 0.169106,
+      "syn-063": 0.051732,
+      "syn-064": 0.020794
+    }
+  },
+  "environment": {
+    "python": "3.12.10",
+    "sklearn": "1.9.1"
+  },
+  "synthetic_india_before_short_text_rule": {
+    "note": "First run, before the short-message rule (model warning threshold applied to all lengths).",
+    "dev": {
+      "scam": {
+        "model_only": {
+          "flagged": 20,
+          "total": 24,
+          "rate": 0.8333
+        },
+        "rules_only": {
+          "flagged": 24,
+          "total": 24,
+          "rate": 1.0
+        },
+        "combined": {
+          "flagged": 24,
+          "total": 24,
+          "rate": 1.0
+        }
+      },
+      "genuine": {
+        "model_only": {
+          "flagged": 12,
+          "total": 16,
+          "rate": 0.75
+        },
+        "rules_only": {
+          "flagged": 0,
+          "total": 16,
+          "rate": 0.0
+        },
+        "combined": {
+          "flagged": 12,
+          "total": 16,
+          "rate": 0.75
+        }
+      }
+    },
+    "holdout": {
+      "scam": {
+        "model_only": {
+          "flagged": 7,
+          "total": 14,
+          "rate": 0.5
+        },
+        "rules_only": {
+          "flagged": 13,
+          "total": 14,
+          "rate": 0.9286
+        },
+        "combined": {
+          "flagged": 14,
+          "total": 14,
+          "rate": 1.0
+        }
+      },
+      "genuine": {
+        "model_only": {
+          "flagged": 7,
+          "total": 10,
+          "rate": 0.7
+        },
+        "rules_only": {
+          "flagged": 0,
+          "total": 10,
+          "rate": 0.0
+        },
+        "combined": {
+          "flagged": 7,
+          "total": 10,
+          "rate": 0.7
+        }
+      }
+    }
+  }
+}
