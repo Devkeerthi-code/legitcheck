@@ -40,6 +40,20 @@ def test_forbidden_claims_fall_back():
     assert out.text == "fb"
 
 
+def test_definitive_claims_fall_back():
+    for reply in (
+        'It asks for a "fee", which is a scam.',
+        "We cannot verify if this offer is safe.",
+        "This is genuine, go ahead.",
+    ):
+        assert FakeGemini(reply).rewrite("fb", Verdict.WARNING, HITS, 0.3, "en").text == "fb"
+
+
+def test_describing_signs_is_allowed():
+    reply = 'The message asks for a "registration fee of Rs 999". Real employers pay you.'
+    assert FakeGemini(reply).rewrite("fb", Verdict.HIGH_RISK, HITS, 0.9, "en").used_llm
+
+
 def test_prompt_contains_only_matched_phrases_not_full_text():
     gemini = FakeGemini("ok")
     gemini.rewrite("fb", Verdict.HIGH_RISK, HITS, 0.9, "en")

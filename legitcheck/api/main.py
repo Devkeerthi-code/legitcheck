@@ -86,6 +86,7 @@ app.add_middleware(
     allow_origin_regex=_extension_origin_regex(),
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
+    expose_headers=["Retry-After"],
     max_age=600,
 )
 

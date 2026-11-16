@@ -26,8 +26,16 @@ LANGUAGES = {
 }
 DEFAULT_MODEL = "gemini-3.5-flash-lite"  # fast; a rewrite needs no reasoning model
 TIMEOUT_MS = 10_000  # the API rejects deadlines under 10s
-# Claims the rewrite must never make, whatever the model returns.
-_FORBIDDEN = re.compile(r"\b(definitely|100%|guaranteed|certainly)\s+(safe|genuine|legit)", re.I)
+# Claims the rewrite must never make, whatever the model returns: calling an offer safe or
+# genuine, or stating as fact that it is a scam. Even "cannot say it is safe" is rejected;
+# a needless fallback to the template is cheaper than a wrong claim.
+_FORBIDDEN = re.compile(
+    r"\b(?:definitely|100%|guaranteed|certainly|surely)\s+(?:safe|genuine|legit|a\s+scam|fake)\b|"
+    r"\bsafe\b|"
+    r"\b(?:is|are|it's|this\s+is)\s+(?:definitely\s+|clearly\s+|obviously\s+)?"
+    r"(?:a\s+)?(?:scam|fraud|fake|genuine|legit(?:imate)?)\b",
+    re.I,
+)
 
 
 @dataclass(frozen=True)
@@ -48,8 +56,9 @@ def build_prompt(verdict: Verdict, hits: list[RuleHit], score: float, lang: str)
     return (
         "You help Indian students judge job and internship offers. Rewrite the findings below "
         f"as a short, plain explanation in {LANGUAGES[lang]} (max 110 words, no markdown, "
-        "no headings). Keep the verdict exactly as given. Never say the offer is safe or "
-        "genuine; say the student should verify and decides. Quote the phrases in double quotes "
+        "no headings). Keep the verdict exactly as given. Describe warning signs only: never "
+        "call the offer safe, genuine, fake or a scam, and never use the word 'safe'. Say the "
+        "student should verify and decides. Quote the phrases in double quotes "
         "exactly as given, without translating or transliterating them. "
         "End with: never pay to get a job, and report fraud at cybercrime.gov.in or call 1930.\n"
         f"Findings (JSON): {json.dumps(facts, ensure_ascii=False)}"
