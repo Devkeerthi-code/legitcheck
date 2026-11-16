@@ -1,0 +1,1668 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LegitCheck · Design concept</title>
+<meta name="description" content="Design concept for LegitCheck: paste an internship or job offer and see every warning sign, with the exact words that triggered it. You decide.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E2A22'/%3E%3Crect x='8' y='9' width='16' height='2.5' rx='1.25' fill='%23fff' opacity='.55'/%3E%3Crect x='6.5' y='14.2' width='19' height='4.2' rx='1.4' fill='%23FFDF9E'/%3E%3Crect x='8' y='21' width='11' height='2.5' rx='1.25' fill='%23fff' opacity='.55'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  // Set theme before paint so there is no flash: stored choice > system preference > light.
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('lc-theme'); } catch (e) {}
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  })();
+</script>
+<style>
+/* ============ TOKENS ============ */
+:root {
+  --paper: #FFFFFF;
+  --canvas: #F4F7F5;
+  --surface: #FFFFFF;
+  --ink: #0E2A22;
+  --ink-2: #3D544B;
+  --ink-3: #5A6E66;
+  --line: #DDE5E1;
+  --line-2: #C3D0CA;
+  --rule: #EDF2EF;
+
+  --accent: #1F4BD8;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E9EEFE;
+
+  --high: #B42318;
+  --high-bg: #FDECEA;
+  --high-mark: #F8CEC8;
+  --warn: #8A4B00;
+  --warn-bg: #FFF4DE;
+  --warn-mark: #FFDF9E;
+  --ok: #17603F;
+  --ok-bg: #E3F2EA;
+
+  --shadow-1: 0 1px 0 rgba(14,42,34,.04), 0 1px 2px rgba(14,42,34,.06);
+  --shadow-2: 0 1px 0 rgba(14,42,34,.04), 0 12px 32px -12px rgba(14,42,34,.18);
+  --shadow-3: 0 2px 0 rgba(14,42,34,.03), 0 30px 60px -24px rgba(14,42,34,.28);
+
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --t-xs: .75rem;    /* 12 */
+  --t-sm: .875rem;   /* 14 */
+  --t-base: 1rem;    /* 16 */
+  --t-lg: 1.125rem;  /* 18 */
+  --t-xl: 1.375rem;  /* 22 */
+  --t-2xl: 1.75rem;  /* 28 */
+  --t-3xl: clamp(2rem, 1.4rem + 2.6vw, 3rem);
+  --t-display: clamp(2.75rem, 1.6rem + 5.4vw, 5.75rem);
+
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px;
+  --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px; --s10: 128px;
+
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-pill: 999px;
+
+  --dur-1: 120ms; --dur-2: 180ms;
+  --ease: cubic-bezier(.2,.8,.2,1);
+
+  --max: 1240px;
+  --gutter: clamp(16px, 4vw, 40px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0D1613; --canvas: #101B17; --surface: #14211C;
+    --ink: #E6EFEA; --ink-2: #AFC2BA; --ink-3: #8FA59C;
+    --line: #22342D; --line-2: #31473E; --rule: #18261F;
+    --accent: #93AAFF; --accent-ink: #0A1433; --accent-soft: #1A2546;
+    --high: #FF9585; --high-bg: #2E1714; --high-mark: #6A2A22;
+    --warn: #F5C46E; --warn-bg: #2B2110; --warn-mark: #5E4515;
+    --ok: #82D6A9; --ok-bg: #112A1E;
+    --shadow-1: 0 1px 0 rgba(0,0,0,.3);
+    --shadow-2: 0 12px 32px -12px rgba(0,0,0,.6);
+    --shadow-3: 0 30px 60px -24px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0D1613; --canvas: #101B17; --surface: #14211C;
+  --ink: #E6EFEA; --ink-2: #AFC2BA; --ink-3: #8FA59C;
+  --line: #22342D; --line-2: #31473E; --rule: #18261F;
+  --accent: #93AAFF; --accent-ink: #0A1433; --accent-soft: #1A2546;
+  --high: #FF9585; --high-bg: #2E1714; --high-mark: #6A2A22;
+  --warn: #F5C46E; --warn-bg: #2B2110; --warn-mark: #5E4515;
+  --ok: #82D6A9; --ok-bg: #112A1E;
+  --shadow-1: 0 1px 0 rgba(0,0,0,.3);
+  --shadow-2: 0 12px 32px -12px rgba(0,0,0,.6);
+  --shadow-3: 0 30px 60px -24px rgba(0,0,0,.7);
+}
+
+/* ============ BASE ============ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 var(--t-base)/1.6 var(--font);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  transition: background-color var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
+}
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; }
+button, input, textarea { font: inherit; color: inherit; }
+::selection { background: var(--warn-mark); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+html { scrollbar-color: var(--line-2) transparent; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: var(--s4); top: -60px; z-index: 100; background: var(--ink); color: var(--paper); padding: var(--s2) var(--s4); border-radius: var(--r-sm); text-decoration: none; }
+.skip:focus { top: var(--s4); }
+.wrap { width: 100%; max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
+.icon { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+.eyebrow {
+  font: 500 var(--t-xs)/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+  display: inline-flex; align-items: center; gap: var(--s2);
+}
+.eyebrow::before { content: ""; width: 18px; height: 2px; background: var(--accent); border-radius: 2px; }
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; }
+h2 { font-size: var(--t-3xl); max-width: 18ch; }
+h3 { font-size: var(--t-lg); letter-spacing: -0.015em; line-height: 1.25; }
+p { margin: 0; }
+.lede { color: var(--ink-2); font-size: var(--t-lg); max-width: 56ch; }
+.section { padding-block: clamp(64px, 9vw, 128px); }
+[id] { scroll-margin-top: 80px; }
+.section-head { display: grid; gap: var(--s4); margin-bottom: clamp(32px, 5vw, 56px); }
+.section-head.split { grid-template-columns: 1fr; align-items: end; }
+@media (min-width: 900px) { .section-head.split { grid-template-columns: 1.1fr 1fr; gap: var(--s7); } }
+.alt { background: var(--canvas); }
+
+/* ============ BUTTONS / CHIPS ============ */
+.btn {
+  --bx: 0px; --by: 0px; --bs: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+  min-height: 48px; padding: 0 var(--s5); border-radius: var(--r-md);
+  border: 1px solid transparent; font-weight: 500; font-size: var(--t-base);
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+  transform: translate(var(--bx), var(--by)) scale(var(--bs));
+  transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary { background: var(--ink); color: var(--paper); box-shadow: var(--shadow-1); }
+.btn-primary:hover { background: color-mix(in oklab, var(--ink) 88%, var(--accent)); }
+.btn-accent { background: var(--accent); color: var(--accent-ink); }
+.btn-accent:hover { background: color-mix(in oklab, var(--accent) 88%, var(--ink)); }
+.btn-ghost { background: transparent; border-color: var(--line-2); color: var(--ink); }
+.btn-ghost:hover { border-color: var(--ink-3); background: var(--canvas); }
+.btn-sm { min-height: 36px; padding: 0 var(--s3); font-size: var(--t-sm); border-radius: var(--r-sm); }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .6; cursor: not-allowed; }
+.btn:active { --bs: .97; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px;
+  border-radius: var(--r-pill); font: 600 var(--t-xs)/1 var(--font); letter-spacing: .01em; white-space: nowrap;
+}
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip-high { color: var(--high); background: var(--high-bg); }
+.chip-warn { color: var(--warn); background: var(--warn-bg); }
+.chip-ok { color: var(--ok); background: var(--ok-bg); }
+.chip-neutral { color: var(--ink-2); background: var(--canvas); border: 1px solid var(--line); }
+.tag-fiction {
+  font: 500 11px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3);
+  border: 1px dashed var(--line-2); border-radius: var(--r-pill); padding: 5px 9px; white-space: nowrap;
+}
+
+/* ============ HEADER ============ */
+.concept-bar {
+  background: var(--ink); color: var(--paper); font: 500 var(--t-xs)/1.4 var(--mono); letter-spacing: .03em;
+  text-align: center; padding: var(--s2) var(--gutter);
+}
+.site-header {
+  position: sticky; top: 0; z-index: 50; background: color-mix(in oklab, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid transparent; transition: border-color var(--dur-2) var(--ease);
+}
+.site-header.scrolled { border-bottom-color: var(--line); }
+.nav { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: var(--s4); }
+.logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; letter-spacing: -0.02em; font-size: var(--t-lg); }
+.logo-mark { width: 28px; height: 28px; }
+.nav-links { display: none; gap: var(--s5); list-style: none; margin: 0; padding: 0; }
+.nav-links a { text-decoration: none; color: var(--ink-2); font-size: var(--t-sm); font-weight: 500; }
+.nav-links a:hover { color: var(--ink); }
+@media (min-width: 960px) { .nav-links { display: flex; } }
+.nav-actions { display: flex; align-items: center; gap: var(--s2); }
+.theme-toggle {
+  width: 40px; height: 40px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface);
+  display: grid; place-items: center; cursor: pointer; color: var(--ink);
+}
+.theme-toggle:hover { border-color: var(--line-2); }
+.theme-toggle .moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .moon { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .sun { display: none; }
+  :root:not([data-theme="light"]) .theme-toggle .moon { display: block; }
+}
+.hide-sm { display: none; }
+@media (min-width: 640px) { .hide-sm { display: inline-flex; } }
+
+/* ============ HERO ============ */
+.hero { padding-block: clamp(40px, 6vw, 88px) clamp(56px, 8vw, 112px); }
+.hero-grid { display: grid; gap: clamp(40px, 5vw, 64px); align-items: start; }
+@media (min-width: 1040px) { .hero-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } }
+.hero-copy { display: grid; gap: var(--s5); padding-top: clamp(0px, 3vw, 40px); }
+.hero h1 { position: relative; z-index: 0; font-size: var(--t-display); letter-spacing: -0.045em; line-height: .96; font-weight: 600; }
+.hero h1 .w { display: inline-block; opacity: 0; transform: translateY(.45em) rotate(1.5deg); }
+.hero h1.go .w { animation: wordIn 620ms cubic-bezier(.2,1.3,.3,1) forwards; animation-delay: calc(var(--i) * 90ms + 120ms); }
+@keyframes wordIn { to { opacity: 1; transform: none; } }
+.hero h1 .pay { position: relative; white-space: nowrap; }
+.hero h1 .pay::after {
+  content: ""; position: absolute; left: -.06em; right: -.06em; bottom: .14em; height: .3em; z-index: -1;
+  background: var(--warn-mark); border-radius: 3px; transform-origin: left center; transform: scaleX(0) skewX(-8deg);
+}
+.hero h1.go .pay::after { animation: markIn 520ms var(--ease) forwards; animation-delay: 1050ms; }
+@keyframes markIn { to { transform: scaleX(1) skewX(-8deg); } }
+.hero h1 .pay-w { position: relative; z-index: 0; isolation: isolate; }
+.hero-copy .lede { font-size: clamp(1.0625rem, 1rem + .3vw, 1.25rem); }
+.hero-ctas { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.hero-meta { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); color: var(--ink-3); font-size: var(--t-sm); padding-top: var(--s2); }
+.hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.hero-meta .icon { width: 16px; height: 16px; color: var(--ok); }
+
+/* Demo panel */
+.demo {
+  position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl);
+  box-shadow: var(--shadow-3); overflow: hidden;
+}
+.demo-top {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); background: var(--canvas);
+}
+.status { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
+.stages { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.stages li {
+  font: 500 11px/1 var(--mono); letter-spacing: .03em; padding: 6px 8px; border-radius: var(--r-pill);
+  color: var(--ink-3); border: 1px solid var(--line); background: var(--surface);
+  transition: color var(--dur-1), background-color var(--dur-1), border-color var(--dur-1);
+}
+.stages li.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+.stages li.done { color: var(--ink-2); border-color: var(--line-2); }
+.stages li.flag.on { background: var(--high); border-color: var(--high); color: var(--paper); }
+@media (max-width: 420px) { .stages li { padding: 6px 6px; font-size: 10px; } }
+.demo-controls { display: flex; gap: 4px; }
+.icon-btn {
+  width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-sm);
+  border: 1px solid var(--line); background: var(--surface); cursor: pointer; color: var(--ink);
+  transition: border-color var(--dur-1), transform var(--dur-1) var(--ease);
+}
+.icon-btn:hover { border-color: var(--line-2); }
+.icon-btn:active { transform: scale(.94); }
+.icon-btn .icon { width: 16px; height: 16px; }
+
+.status-line {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap;
+  padding: var(--s3) var(--s4) 0; font: 500 var(--t-xs)/1.4 var(--mono); color: var(--ink-2);
+}
+.status-line .live { display: inline-flex; align-items: center; gap: 8px; }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 50%, transparent); animation: pulse 1.4s infinite; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.demo.finished .pulse { animation: none; background: var(--high); }
+
+.doc {
+  position: relative; margin: var(--s3) var(--s4) 0; border: 1px solid var(--line); border-radius: var(--r-md);
+  background:
+    linear-gradient(90deg, transparent 0 40px, color-mix(in oklab, var(--high) 30%, transparent) 40px 41px, transparent 41px),
+    var(--paper);
+  font: 400 13px/26px var(--mono); color: var(--ink); padding: var(--s3) var(--s3) var(--s3) 52px;
+  overflow: hidden;
+}
+@media (max-width: 420px) { .doc { font-size: 12px; line-height: 24px; padding-left: 44px; background: linear-gradient(90deg, transparent 0 34px, color-mix(in oklab, var(--high) 30%, transparent) 34px 35px, transparent 35px), var(--paper); } }
+.doc .ln { position: relative; padding-inline: 2px; word-break: break-word; }
+.doc .ln.dim { color: var(--ink-3); }
+.doc .num {
+  position: absolute; left: -40px; top: 3px; width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center; font: 600 10px/1 var(--font); color: var(--paper); background: var(--high);
+  transform: scale(0);
+}
+@media (max-width: 420px) { .doc .num { left: -36px; top: 2px; } }
+.doc .num.warn { background: var(--warn); color: var(--paper); }
+:root[data-theme="dark"] .doc .num.warn, :root[data-theme="dark"] .doc .num { color: #0D1613; }
+.scanbar {
+  position: absolute; left: 0; right: 0; top: 0; height: 26px; pointer-events: none;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 0%, transparent), color-mix(in oklab, var(--accent) 12%, transparent) 30%, color-mix(in oklab, var(--accent) 12%, transparent));
+  border-bottom: 1.5px solid var(--accent); opacity: 0;
+  transition: transform 300ms var(--ease), opacity var(--dur-2);
+}
+mark.hl {
+  color: inherit; background: linear-gradient(var(--hl, var(--high-mark)), var(--hl, var(--high-mark))) no-repeat 0 85% / 0% 80%;
+  border-radius: 3px; padding: 0 1px; transition: background-size 520ms var(--ease);
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+mark.hl.warn { --hl: var(--warn-mark); }
+mark.hl.on { background-size: 100% 80%; }
+
+.flags { padding: var(--s3) var(--s4) 0; display: grid; gap: 6px; min-height: 40px; }
+.flags-head { display: flex; justify-content: space-between; align-items: baseline; font: 500 var(--t-xs)/1 var(--mono); color: var(--ink-3); padding-bottom: 2px; }
+.flag-row {
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: var(--s2);
+  padding: 7px 10px; border-radius: var(--r-sm); background: var(--canvas); border: 1px solid var(--line);
+  font-size: var(--t-sm); line-height: 1.3; will-change: transform;
+}
+.flag-row .n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font: 600 10px/1 var(--font); color: var(--paper); background: var(--high); }
+.flag-row.warn .n { background: var(--warn); }
+:root[data-theme="dark"] .flag-row .n { color: #0D1613; }
+.flag-row .t { font-weight: 500; min-width: 0; }
+.flag-row .q { display: block; font: 400 var(--t-xs)/1.35 var(--mono); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flag-row .sev { font: 600 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--high); }
+.flag-row.warn .sev { color: var(--warn); }
+
+.verdict-bar {
+  display: grid; grid-template-columns: 1fr; gap: var(--s3); align-items: center;
+  margin: var(--s3) var(--s4) var(--s4); padding: var(--s3) var(--s4); border-radius: var(--r-md);
+  border: 1px dashed var(--line-2); min-height: 72px;
+}
+@media (min-width: 520px) { .verdict-bar { grid-template-columns: auto 1fr auto; } }
+.score-mini { display: grid; gap: 6px; min-width: 0; }
+.score-mini .lbl { display: flex; justify-content: space-between; gap: var(--s2); font: 500 var(--t-xs)/1 var(--mono); color: var(--ink-3); }
+.meter { height: 6px; border-radius: 6px; background: var(--rule); overflow: hidden; border: 1px solid var(--line); }
+.meter > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--ok), var(--warn) 50%, var(--high)); border-radius: inherit; background-size: var(--full, 400px) 100%; }
+.stamp {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: var(--r-sm);
+  border: 2px solid var(--high); color: var(--high); background: var(--high-bg);
+  font: 700 var(--t-sm)/1 var(--font); letter-spacing: .02em; text-transform: uppercase;
+  opacity: 0; transform: rotate(-3deg) scale(1.6); will-change: transform; justify-self: start;
+}
+.decide { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-sm); font-weight: 600; color: var(--ink); opacity: 0; transition: opacity var(--dur-2); }
+.decide.on { opacity: 1; }
+.decide .icon { color: var(--accent); }
+
+/* ============ COMPARE ============ */
+.compare { display: grid; gap: var(--s4); }
+@media (min-width: 880px) { .compare { grid-template-columns: 1fr 1fr; gap: var(--s5); } }
+.cmp-card { border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--surface); padding: clamp(20px, 3vw, 32px); }
+.cmp-card header { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s5); }
+.cmp-card h3 { font-size: var(--t-xl); }
+.cmp-card.bad { background: linear-gradient(180deg, var(--high-bg), var(--surface) 140px); }
+.cmp-card.good { background: linear-gradient(180deg, var(--ok-bg), var(--surface) 140px); }
+.cmp-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.cmp-list li {
+  display: grid; grid-template-columns: 28px 1fr; gap: var(--s3); align-items: start;
+  padding: 14px 0; border-top: 1px solid var(--line); font-size: var(--t-base); line-height: 1.45;
+  opacity: 0; transform: translateX(-8px); transition: opacity 260ms var(--ease), transform 360ms cubic-bezier(.2,1.4,.3,1);
+  transition-delay: calc(var(--i) * 60ms);
+}
+.in .cmp-list li { opacity: 1; transform: none; }
+.cmp-list li small { display: block; color: var(--ink-3); font: 400 var(--t-xs)/1.5 var(--mono); margin-top: 2px; }
+.mk { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; }
+.bad .mk { background: var(--high-bg); color: var(--high); border: 1px solid color-mix(in oklab, var(--high) 25%, transparent); }
+.good .mk { background: var(--ok-bg); color: var(--ok); border: 1px solid color-mix(in oklab, var(--ok) 25%, transparent); }
+.mk .icon { width: 16px; height: 16px; stroke-width: 2.25; stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset 420ms var(--ease); transition-delay: calc(var(--i) * 60ms + 160ms); }
+.in .mk .icon { stroke-dashoffset: 0; }
+.cmp-note { margin-top: var(--s5); display: flex; gap: var(--s3); align-items: flex-start; color: var(--ink-2); font-size: var(--t-sm); max-width: 72ch; }
+.cmp-note .icon { color: var(--accent); margin-top: 2px; }
+
+/* ============ BENTO ============ */
+.bento { display: grid; gap: var(--s3); grid-template-columns: 1fr; }
+@media (min-width: 640px) { .bento { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .bento { grid-template-columns: repeat(4, 1fr); gap: var(--s4); } .tile.w2 { grid-column: span 2; } }
+.tile {
+  --rx: 0deg; --ry: 0deg;
+  position: relative; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+  padding: var(--s5); display: grid; gap: var(--s3); align-content: start; min-height: 220px;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d;
+  transition: border-color var(--dur-1), box-shadow var(--dur-2);
+}
+.tile:hover { border-color: var(--line-2); box-shadow: var(--shadow-2); }
+.tile .sev-tag { position: absolute; top: var(--s4); right: var(--s4); }
+.tile h3 { padding-right: 96px; }
+.tile p { color: var(--ink-2); font-size: var(--t-sm); }
+.mock { margin-top: auto; border-radius: var(--r-md); background: var(--canvas); border: 1px solid var(--line); padding: var(--s3); font: 400 12px/1.6 var(--mono); color: var(--ink-2); min-height: 76px; overflow: hidden; }
+.mock b { font-weight: 600; color: var(--ink); }
+.mock .x { background: var(--high-mark); color: var(--ink); border-radius: 3px; padding: 0 2px; }
+.mock .y { background: var(--warn-mark); color: var(--ink); border-radius: 3px; padding: 0 2px; }
+.mock .okc { color: var(--ok); }
+.mock-row { display: flex; justify-content: space-between; gap: var(--s2); align-items: center; }
+.mock-chat { display: grid; gap: 6px; }
+.bubble { justify-self: start; background: var(--surface); border: 1px solid var(--line); border-radius: 10px 10px 10px 3px; padding: 4px 9px; max-width: 92%; }
+.bubble.me { justify-self: end; background: var(--accent-soft); border-color: transparent; border-radius: 10px 10px 3px 10px; }
+.tick-count { font-variant-numeric: tabular-nums; }
+.link-swap { position: relative; display: block; height: 1.6em; overflow: hidden; }
+.link-swap span { display: block; transition: transform 260ms cubic-bezier(.2,1.3,.3,1); }
+.tile:hover .link-swap span, .tile:focus-within .link-swap span, .tile.auto .link-swap span { transform: translateY(-100%); }
+.timer { font: 600 var(--t-xl)/1 var(--mono); color: var(--high); font-variant-numeric: tabular-nums; }
+.redact { display: inline-block; height: 10px; border-radius: 2px; background: var(--ink); vertical-align: middle; }
+
+/* ============ VERDICT SCREEN ============ */
+.verdict-screen {
+  border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--surface); box-shadow: var(--shadow-2); overflow: hidden;
+}
+.vs-top {
+  display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; justify-content: space-between;
+  padding: var(--s4) var(--s5); border-bottom: 1px solid var(--line); background: var(--canvas);
+}
+.vs-top .left { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; }
+.vs-grid { display: grid; }
+@media (min-width: 1000px) { .vs-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
+.vs-doc { padding: clamp(20px, 3vw, 32px); border-bottom: 1px solid var(--line); }
+@media (min-width: 1000px) { .vs-doc { border-bottom: 0; border-right: 1px solid var(--line); } }
+.vs-doc .meta { font: 500 var(--t-xs)/1.6 var(--mono); color: var(--ink-3); margin-bottom: var(--s4); display: grid; gap: 2px; }
+.vs-text { font-size: var(--t-lg); line-height: 1.85; color: var(--ink); }
+.vs-text p + p { margin-top: var(--s3); }
+.rule-mark {
+  appearance: none; border: 0; padding: 1px 3px; margin: 0 -1px; border-radius: 4px; cursor: pointer;
+  font: inherit; color: inherit; line-height: inherit;
+  background: var(--high-mark); box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--high) 60%, transparent);
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  transition: box-shadow var(--dur-1), background-color var(--dur-1);
+}
+.rule-mark.warn { background: var(--warn-mark); box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--warn) 60%, transparent); }
+.rule-mark sup { font: 700 10px/1 var(--font); margin-left: 2px; color: var(--high); vertical-align: 6px; }
+.rule-mark.warn sup { color: var(--warn); }
+.rule-mark:hover, .rule-mark[aria-pressed="true"] { box-shadow: inset 0 -2px 0 var(--high), 0 0 0 2px var(--high); }
+.rule-mark.warn:hover, .rule-mark.warn[aria-pressed="true"] { box-shadow: inset 0 -2px 0 var(--warn), 0 0 0 2px var(--warn); }
+.vs-hint { margin-top: var(--s5); font-size: var(--t-sm); color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+
+.vs-side { padding: clamp(20px, 3vw, 32px); display: grid; gap: var(--s5); align-content: start; }
+.rule-card {
+  border-radius: var(--r-lg); border: 1px solid var(--line); padding: var(--s5); background: var(--paper); will-change: transform;
+  border-left: 4px solid var(--high);
+}
+.rule-card.warn { border-left-color: var(--warn); }
+.rule-card .rc-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); margin-bottom: var(--s3); }
+.rule-card .rc-id { font: 500 var(--t-xs)/1 var(--mono); color: var(--ink-3); }
+.rule-card h3 { font-size: var(--t-xl); margin-bottom: var(--s3); }
+.rule-card dl { margin: 0; display: grid; gap: var(--s3); }
+.rule-card dt { font: 600 var(--t-xs)/1.2 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.rule-card dd { margin: 4px 0 0; color: var(--ink-2); font-size: var(--t-sm); }
+.rule-card q { font-family: var(--mono); font-size: 13px; color: var(--ink); background: var(--canvas); padding: 1px 4px; border-radius: 4px; quotes: "\201C" "\201D"; }
+.rule-nav { display: flex; gap: 6px; margin-top: var(--s4); flex-wrap: wrap; }
+.rule-nav button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font: 600 12px/1 var(--font); }
+.rule-nav button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.score-block { display: grid; grid-template-columns: auto 1fr; gap: var(--s5); align-items: center; }
+.gauge { width: 132px; height: 76px; }
+.gauge text { font-family: var(--mono); }
+.score-block .lbl { font-size: var(--t-sm); color: var(--ink-2); }
+.score-block .lbl strong { display: block; color: var(--ink); font-size: var(--t-base); margin-bottom: 2px; }
+.words { display: grid; gap: 8px; }
+.words h4, .checklist h4 { margin: 0 0 4px; font: 600 var(--t-xs)/1.2 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.word { display: grid; grid-template-columns: minmax(0, 9.5em) 1fr 3ch; gap: var(--s3); align-items: center; font-size: var(--t-sm); }
+.word code { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.word .bar { height: 8px; border-radius: 4px; background: var(--rule); overflow: hidden; }
+.word .bar i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--ink); transition: width 700ms cubic-bezier(.2,1.2,.3,1); }
+.in .word .bar i { width: var(--w); }
+.word .v { font: 500 12px/1 var(--mono); color: var(--ink-3); text-align: right; }
+
+.you-decide { border-top: 1px solid var(--line); padding: clamp(20px, 3vw, 32px); display: grid; gap: var(--s5); background: linear-gradient(180deg, var(--accent-soft), transparent 160px); }
+@media (min-width: 1000px) { .you-decide { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--s7); } }
+.you-decide h3 { font-size: var(--t-2xl); letter-spacing: -0.03em; }
+.you-decide .why { color: var(--ink-2); margin-top: var(--s3); font-size: var(--t-base); }
+.checklist { display: grid; gap: var(--s2); }
+.check-item {
+  display: grid; grid-template-columns: 24px 1fr; gap: var(--s3); align-items: start; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); cursor: pointer;
+  transition: border-color var(--dur-1), background-color var(--dur-1);
+}
+.check-item:hover { border-color: var(--line-2); }
+.check-item input { appearance: none; -webkit-appearance: none; margin: 1px 0 0; width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--line-2); background: var(--paper); display: grid; place-items: center; cursor: pointer; transition: background-color var(--dur-1), border-color var(--dur-1); }
+.check-item input::after { content: ""; width: 10px; height: 6px; border: 2px solid var(--accent-ink); border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px) scale(0); transition: transform var(--dur-2) cubic-bezier(.2,1.6,.3,1); }
+.check-item input:checked { background: var(--accent); border-color: var(--accent); }
+.check-item input:checked::after { transform: rotate(-45deg) translate(1px, -1px) scale(1); }
+.check-item input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.check-item:has(input:checked) { background: var(--accent-soft); border-color: transparent; }
+.check-item:has(input:checked) .ct { text-decoration: line-through; text-decoration-color: color-mix(in oklab, var(--ink) 40%, transparent); }
+.check-item .ct { font-weight: 500; }
+.check-item small { display: block; color: var(--ink-2); font-size: var(--t-sm); font-weight: 400; margin-top: 2px; }
+.check-item a { color: var(--accent); font-weight: 500; text-underline-offset: 3px; }
+.check-progress { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); font: 500 var(--t-xs)/1 var(--mono); color: var(--ink-3); }
+.decide-actions { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); }
+
+.levels { display: grid; gap: var(--s3); margin-top: var(--s6); }
+@media (min-width: 760px) { .levels { grid-template-columns: repeat(3, 1fr); } }
+.level { border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s4) var(--s5); background: var(--surface); display: grid; gap: var(--s2); }
+.level p { color: var(--ink-2); font-size: var(--t-sm); }
+.level.none { border-style: dashed; background: transparent; }
+.level.none s { color: var(--ink-3); }
+
+/* ============ STATS ============ */
+.stats { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-xl); overflow: hidden; }
+@media (min-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+.stat { background: var(--surface); padding: var(--s5); display: grid; gap: var(--s3); align-content: start; }
+.stat .k { font: 500 var(--t-xs)/1.3 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.stat .tbd {
+  font: 600 clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem)/1 var(--mono); letter-spacing: -0.03em; color: var(--ink-3);
+  display: inline-flex; align-items: center; gap: var(--s3);
+}
+.stat .tbd .slot { display: inline-block; width: 3.2ch; height: .9em; border: 1.5px dashed var(--line-2); border-radius: 6px; }
+.stat .tbd-note { font: 500 11px/1 var(--mono); color: var(--warn); background: var(--warn-bg); padding: 5px 8px; border-radius: var(--r-pill); justify-self: start; letter-spacing: .03em; }
+.stat p { color: var(--ink-2); font-size: var(--t-sm); }
+
+/* ============ STEPS ============ */
+.steps-wrap { position: relative; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s4); position: relative; }
+.steps-track { position: absolute; left: 19px; top: 20px; bottom: 20px; width: 2px; background: var(--line); border-radius: 2px; }
+.steps-track i { position: absolute; inset: 0 0 auto 0; height: calc(var(--p, 0) * 100%); background: var(--accent); border-radius: 2px; }
+@media (min-width: 960px) {
+  .steps { grid-template-columns: repeat(5, 1fr); gap: var(--s4); }
+  .steps-track { left: 20px; right: 20px; top: 19px; bottom: auto; width: auto; height: 2px; }
+  .steps-track i { inset: 0 auto 0 0; height: 100%; width: calc(var(--p, 0) * 100%); }
+}
+.step { display: grid; grid-template-columns: 40px 1fr; gap: var(--s4); position: relative; }
+@media (min-width: 960px) { .step { grid-template-columns: 1fr; gap: var(--s4); } }
+.step-dot {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; z-index: 1;
+  background: var(--surface); border: 2px solid var(--line-2); font: 600 var(--t-sm)/1 var(--mono); color: var(--ink-3);
+  transition: background-color var(--dur-2), border-color var(--dur-2), color var(--dur-2), transform 300ms cubic-bezier(.2,1.6,.3,1);
+}
+.step.on .step-dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); transform: scale(1.08); }
+.step-body { border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s4); background: var(--surface); display: grid; gap: var(--s2); transition: border-color var(--dur-2), box-shadow var(--dur-2), transform 300ms var(--ease); }
+.step.on .step-body { border-color: var(--line-2); box-shadow: var(--shadow-2); }
+.step-body p { color: var(--ink-2); font-size: var(--t-sm); }
+.step-mini { margin-top: var(--s2); border-radius: var(--r-sm); background: var(--canvas); border: 1px solid var(--line); padding: 10px; font: 400 11.5px/1.5 var(--mono); color: var(--ink-2); min-height: 64px; }
+.step-mini .chip { height: 22px; font-size: 11px; }
+
+/* ============ PASTE ============ */
+.paste-grid { display: grid; gap: var(--s5); }
+@media (min-width: 1000px) { .paste-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--s6); align-items: start; } }
+.paste-card { border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--surface); padding: clamp(20px, 3vw, 28px); box-shadow: var(--shadow-2); display: grid; gap: var(--s4); }
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 500; font-size: var(--t-sm); }
+.field .help { color: var(--ink-3); font-size: var(--t-xs); }
+.field textarea, .field input {
+  width: 100%; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--paper);
+  padding: 12px 14px; font-size: var(--t-base); line-height: 1.5; resize: vertical;
+  transition: border-color var(--dur-1), box-shadow var(--dur-1);
+}
+.field textarea { min-height: 180px; font-family: var(--mono); font-size: 14px; }
+.field textarea::placeholder, .field input::placeholder { color: var(--ink-3); }
+.field textarea:focus, .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent); }
+.field.err textarea { border-color: var(--high); }
+.err-msg { color: var(--high); font-size: var(--t-sm); display: none; align-items: center; gap: 6px; }
+.field.err .err-msg { display: flex; }
+.paste-actions { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; justify-content: space-between; }
+.paste-actions .counts { font: 500 var(--t-xs)/1 var(--mono); color: var(--ink-3); }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid color-mix(in oklab, var(--paper) 35%, transparent); border-top-color: var(--paper); animation: spin 700ms linear infinite; display: none; }
+.btn.pending .spinner { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.result { border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--surface); padding: clamp(20px, 3vw, 28px); display: grid; gap: var(--s4); min-height: 320px; align-content: start; }
+.result-empty { display: grid; place-items: center; text-align: center; gap: var(--s3); color: var(--ink-2); padding: var(--s6) var(--s3); min-height: 280px; }
+.result-empty svg { width: 120px; height: auto; }
+.skel { display: grid; gap: var(--s3); }
+.skel i { display: block; height: 14px; border-radius: 6px; background: linear-gradient(90deg, var(--rule), var(--line), var(--rule)); background-size: 200% 100%; animation: shimmer 1.1s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.result-head { display: flex; justify-content: space-between; gap: var(--s3); align-items: center; flex-wrap: wrap; }
+.result-text { font: 400 13px/1.8 var(--mono); color: var(--ink-2); max-height: 180px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s3); background: var(--paper); white-space: pre-wrap; word-break: break-word; }
+.result-text mark { background: var(--high-mark); color: var(--ink); border-radius: 3px; padding: 0 2px; }
+.result-text mark.warn { background: var(--warn-mark); }
+.result-flags { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.result-flags li { display: grid; grid-template-columns: auto 1fr; gap: var(--s3); align-items: start; font-size: var(--t-sm); padding: 8px 0; border-top: 1px solid var(--line); }
+.result-flags q { font-family: var(--mono); font-size: 12.5px; color: var(--ink-3); }
+.fine { font-size: var(--t-xs); color: var(--ink-3); }
+.samples { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.samples span { font-size: var(--t-xs); color: var(--ink-3); }
+
+/* ============ EXTENSION ============ */
+.ext-grid { display: grid; gap: var(--s6); align-items: center; }
+@media (min-width: 960px) { .ext-grid { grid-template-columns: 1fr auto; } }
+.ext-frame { width: 100%; max-width: 360px; height: 560px; border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-3); background: var(--surface); justify-self: center; display: block; }
+.ext-points { list-style: none; padding: 0; margin: var(--s5) 0 0; display: grid; gap: var(--s3); counter-reset: ep; }
+.ext-points li { display: grid; grid-template-columns: 32px 1fr; gap: var(--s3); align-items: start; color: var(--ink-2); counter-increment: ep; }
+.ext-points li::before { content: counter(ep); width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font: 600 var(--t-sm)/1 var(--mono); }
+.ext-points b { color: var(--ink); font-weight: 600; }
+
+/* ============ FAQ ============ */
+.tabs { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--canvas); overflow-x: auto; scrollbar-width: none; max-width: 100%; width: max-content; }
+@media (max-width: 520px) { .tabs { flex-wrap: wrap; width: auto; } .tab { flex: 1 1 auto; } }
+.tab {
+  border: 0; background: transparent; cursor: pointer; padding: 10px 14px; border-radius: var(--r-sm);
+  font-weight: 500; font-size: var(--t-sm); color: var(--ink-2); white-space: nowrap; min-height: 40px;
+  transition: background-color var(--dur-1), color var(--dur-1);
+}
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+.tab.urgent[aria-selected="true"] { color: var(--high); }
+.tabpanel { margin-top: var(--s5); }
+.qa { border-top: 1px solid var(--line); }
+.qa:last-child { border-bottom: 1px solid var(--line); }
+.qa summary {
+  list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: var(--s4); align-items: center;
+  padding: var(--s5) 0; font-size: var(--t-lg); font-weight: 500; letter-spacing: -0.01em;
+}
+.qa summary::-webkit-details-marker { display: none; }
+.qa summary .pm { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line-2); display: grid; place-items: center; flex: none; transition: transform 260ms cubic-bezier(.2,1.5,.3,1), background-color var(--dur-1); }
+.qa[open] summary .pm { transform: rotate(45deg); background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.qa .ans { padding: 0 0 var(--s5); color: var(--ink-2); max-width: 70ch; display: grid; gap: var(--s3); }
+.qa .ans a { color: var(--accent); font-weight: 500; text-underline-offset: 3px; }
+.faq-grid { display: grid; gap: var(--s6); }
+.faq-grid > * { min-width: 0; }
+@media (min-width: 960px) { .faq-grid { grid-template-columns: minmax(0, .8fr) minmax(0, 1.6fr); gap: var(--s8); } }
+
+/* ============ HELP BAND / FOOTER ============ */
+.help-band { background: var(--ink); color: var(--paper); border-radius: var(--r-xl); padding: clamp(24px, 4vw, 48px); display: grid; gap: var(--s5); align-items: center; }
+@media (min-width: 880px) { .help-band { grid-template-columns: 1fr auto; } }
+.help-band h2 { color: var(--paper); max-width: 22ch; }
+.help-band p { color: color-mix(in oklab, var(--paper) 78%, var(--ink)); margin-top: var(--s3); max-width: 60ch; }
+.help-band .btns { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.help-band .btn-call { background: var(--paper); color: var(--ink); font-size: var(--t-lg); font-weight: 600; min-height: 56px; }
+.help-band .btn-out { border-color: color-mix(in oklab, var(--paper) 35%, transparent); color: var(--paper); background: transparent; }
+.help-band .btn-out:hover { background: color-mix(in oklab, var(--paper) 10%, transparent); }
+footer { padding-block: var(--s7) var(--s6); color: var(--ink-3); font-size: var(--t-sm); }
+.foot { display: flex; flex-wrap: wrap; gap: var(--s4); justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: var(--s5); }
+
+/* ============ TOKENS LEGEND ============ */
+.legend { border: 1px dashed var(--line-2); border-radius: var(--r-xl); padding: clamp(20px, 3vw, 32px); display: grid; gap: var(--s6); }
+.legend h3 { font: 600 var(--t-xs)/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); margin-bottom: var(--s3); }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s3); }
+.sw { border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--surface); }
+.sw i { display: block; height: 56px; border-bottom: 1px solid var(--line); }
+.sw div { padding: 8px 10px; font: 500 11px/1.5 var(--mono); color: var(--ink-2); }
+.sw div b { display: block; color: var(--ink); font-family: var(--font); font-size: 12px; }
+.type-scale { display: grid; gap: var(--s2); }
+.type-scale div { display: flex; gap: var(--s4); align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: var(--s2); overflow: hidden; }
+.type-scale code { font: 500 11px/1 var(--mono); color: var(--ink-3); flex: none; width: 92px; }
+.type-scale span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.02em; }
+.legend-row { display: grid; gap: var(--s6); }
+@media (min-width: 900px) { .legend-row { grid-template-columns: repeat(3, 1fr); } }
+.spaces { display: flex; align-items: flex-end; gap: var(--s2); flex-wrap: wrap; }
+.spaces span { display: grid; gap: 4px; justify-items: center; font: 500 10px/1 var(--mono); color: var(--ink-3); }
+.spaces i { display: block; background: var(--accent); border-radius: 2px; width: 8px; }
+.radii { display: flex; gap: var(--s3); flex-wrap: wrap; }
+.radii span { width: 56px; height: 56px; border: 1.5px solid var(--ink); display: grid; place-items: center; font: 500 10px/1 var(--mono); color: var(--ink-2); }
+.motion-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font: 400 12px/1.5 var(--mono); color: var(--ink-2); }
+.motion-list b { color: var(--ink); font-weight: 600; }
+
+/* ============ TOAST ============ */
+.toasts { position: fixed; left: 50%; bottom: var(--s4); transform: translateX(-50%); z-index: 80; display: grid; gap: var(--s2); width: min(92vw, 420px); pointer-events: none; }
+.toast { pointer-events: auto; display: flex; gap: var(--s3); align-items: center; background: var(--ink); color: var(--paper); padding: 12px 16px; border-radius: var(--r-md); box-shadow: var(--shadow-3); font-size: var(--t-sm); will-change: transform; }
+.toast .icon { color: var(--warn-mark); }
+
+/* ============ REVEAL ============ */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity 420ms var(--ease), transform 520ms var(--ease); }
+.reveal.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; transition-delay: 0ms !important; }
+  .hero h1 .w { opacity: 1; transform: none; }
+  .hero h1 .pay::after { transform: scaleX(1) skewX(-8deg); }
+  .reveal { opacity: 1; transform: none; }
+  .tile { transform: none !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-cross" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a1 1 0 01-1 1A16 16 0 014 5a1 1 0 011-1z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8 8 0 00-6 2.7M4 4v4h4"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 013 0V12M11 11V4.5a1.5 1.5 0 013 0V12M14 11.5V6a1.5 1.5 0 013 0v8a6 6 0 01-6 6h-.6a6 6 0 01-4.8-2.4L3.5 14.8a1.6 1.6 0 012.4-2.1L8 14.5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-pointer" viewBox="0 0 24 24"><path d="M6 3l12 7-5.5 1.5L10 17z"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></symbol>
+  </defs>
+</svg>
+
+<div class="concept-bar" role="note">Design concept for review. Not the production app. All companies and messages on this page are fictional.</div>
+
+<header class="site-header" id="top">
+  <nav class="wrap nav" aria-label="Main">
+    <a class="logo" href="#top" aria-label="LegitCheck home">
+      <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--ink)"/><rect x="8" y="9" width="16" height="2.5" rx="1.25" fill="var(--paper)" opacity=".55"/><rect x="6.5" y="14.2" width="19" height="4.2" rx="1.4" fill="#FFDF9E"/><rect x="8" y="21" width="11" height="2.5" rx="1.25" fill="var(--paper)" opacity=".55"/></svg>
+      LegitCheck
+    </a>
+    <ul class="nav-links">
+      <li><a href="#signs">Warning signs</a></li>
+      <li><a href="#report">Sample report</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a class="btn btn-ghost btn-sm hide-sm" href="#extension">Chrome extension</a>
+      <a class="btn btn-primary btn-sm magnetic" href="#check">Check an offer</a>
+      <button class="theme-toggle" type="button" id="themeToggle" aria-label="Switch to dark mode">
+        <svg class="icon sun" aria-hidden="true"><use href="#i-sun"/></svg>
+        <svg class="icon moon" aria-hidden="true"><use href="#i-moon"/></svg>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+
+<!-- ============ HERO ============ -->
+<section class="hero" aria-labelledby="heroTitle">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">For students checking internship and job offers</span>
+      <h1 id="heroTitle" class="split" aria-label="Read it before you pay for it.">Read it before you <span class="pay"><span class="pay-w">pay for it.</span></span></h1>
+      <p class="lede">Paste an offer message or posting. LegitCheck points out each warning sign, such as a registration fee, HR who only talks on Telegram, or a Gmail address posing as a company, and shows you the exact words that triggered it. Then you decide.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary magnetic" href="#check">Check an offer <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-ghost" href="#report">See a sample report</a>
+      </div>
+      <div class="hero-meta">
+        <span><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>Nothing you paste is stored</span>
+        <span><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>No account needed</span>
+        <span><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Free</span>
+      </div>
+    </div>
+
+    <div class="demo" id="demo" aria-labelledby="demoTitle">
+      <div class="demo-top">
+        <div class="status">
+          <h2 id="demoTitle" class="sr-only">Live demo: checking a fictional offer message</h2>
+          <ol class="stages" aria-hidden="true">
+            <li data-stage="reading">Reading</li>
+            <li data-stage="checking">Checking</li>
+            <li data-stage="flagging" class="flag">Flagging</li>
+          </ol>
+        </div>
+        <div class="demo-controls">
+          <button class="icon-btn" type="button" id="demoPause" aria-label="Pause demo"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+          <button class="icon-btn" type="button" id="demoReplay" aria-label="Replay demo"><svg class="icon" aria-hidden="true"><use href="#i-replay"/></svg></button>
+        </div>
+      </div>
+      <div class="status-line">
+        <span class="live"><span class="pulse" aria-hidden="true"></span><span id="demoStatus" aria-live="polite">Waiting to start</span></span>
+        <span class="tag-fiction">Fictional example</span>
+      </div>
+
+      <div class="doc" id="demoDoc">
+        <div class="scanbar" id="scanbar" aria-hidden="true"></div>
+        <div class="ln dim">From: Nexora Talent Solutions &lt;<mark class="hl warn" data-flag="gmail">nexora.hr.team@gmail.com</mark>&gt;</div>
+        <div class="ln dim">Subject: Selected for Work From Home Internship</div>
+        <div class="ln">Dear Candidate, you are shortlisted for our Data Entry Internship. Stipend ₹25,000/month.</div>
+        <div class="ln">To confirm your seat, pay a one-time <mark class="hl" data-flag="fee">registration fee of ₹1,999</mark>.</div>
+        <div class="ln">For verification, <mark class="hl" data-flag="id">send Aadhaar and PAN</mark> photos today.</div>
+        <div class="ln">For onboarding, <mark class="hl warn" data-flag="tg">contact HR on Telegram</mark>: @nexora_hr_desk</div>
+        <div class="ln">Pay securely here: <mark class="hl warn" data-flag="link">bit.ly/nx-onboard</mark></div>
+        <div class="ln">This <mark class="hl warn" data-flag="urgent">offer valid only today</mark>. Seats are limited.</div>
+      </div>
+
+      <div class="flags" id="demoFlags" aria-live="polite">
+        <div class="flags-head"><span>Warning signs found</span><span id="flagCount">0</span></div>
+      </div>
+
+      <div class="verdict-bar">
+        <div class="stamp" id="stamp" aria-hidden="true"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:currentColor"></span>High risk</div>
+        <div class="score-mini">
+          <div class="lbl"><span>Model score (example)</span><span id="scoreVal">0.00</span></div>
+          <div class="meter" aria-hidden="true"><i id="scoreBar"></i></div>
+        </div>
+        <div class="decide" id="decide"><svg class="icon" aria-hidden="true"><use href="#i-hand"/></svg>You decide</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARE ============ -->
+<section class="section alt" id="signs" aria-labelledby="cmpTitle">
+  <div class="wrap">
+    <div class="section-head split">
+      <div style="display:grid;gap:16px">
+        <span class="eyebrow">What to look for</span>
+        <h2 id="cmpTitle">Scam offers repeat the same few moves.</h2>
+      </div>
+      <p class="lede">Most fake internships in India follow a script: an exciting stipend, then a fee, a chat app and a deadline. Genuine offers look boring by comparison, and that is a good sign.</p>
+    </div>
+
+    <div class="compare" id="compare">
+      <article class="cmp-card bad">
+        <header><h3>Signs of a scam</h3><span class="chip chip-high"><span class="dot"></span>Warning signs</span></header>
+        <ul class="cmp-list">
+          <li style="--i:0"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-cross"/></svg></span><span>You pay before you start: a registration, training or "security deposit" fee<small>"pay ₹1,999 to confirm your seat"</small></span></li>
+          <li style="--i:1"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-cross"/></svg></span><span>HR only talks on Telegram or WhatsApp, with no company number or office<small>"contact HR on Telegram: @hr_desk"</small></span></li>
+          <li style="--i:2"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-cross"/></svg></span><span>A Gmail or Yahoo address claiming to be a company<small>company.hr.team@gmail.com</small></span></li>
+          <li style="--i:3"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-cross"/></svg></span><span>You get paid to like videos, rate hotels or "complete tasks"<small>"earn ₹50 per like"</small></span></li>
+          <li style="--i:4"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-cross"/></svg></span><span>Aadhaar, PAN or bank details asked for before any interview</span></li>
+          <li style="--i:5"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-cross"/></svg></span><span>Shortened or lookalike links that hide where they go<small>bit.ly/..., nex0ra-careers.co</small></span></li>
+          <li style="--i:6"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-cross"/></svg></span><span>Pressure to decide now<small>"offer valid only today", "reply in 30 minutes"</small></span></li>
+        </ul>
+      </article>
+      <article class="cmp-card good">
+        <header><h3>Signs of a genuine offer</h3><span class="chip chip-ok"><span class="dot"></span>Consistent</span></header>
+        <ul class="cmp-list">
+          <li style="--i:0"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span><span>You never pay. The company pays you.</span></li>
+          <li style="--i:1"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span><span>There was a real interview or test with named people</span></li>
+          <li style="--i:2"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span><span>Email comes from the company's own domain, the same one as its website<small>careers@company.com</small></span></li>
+          <li style="--i:3"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span><span>The role is listed on the company's official careers page</span></li>
+          <li style="--i:4"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span><span>ID and bank details are asked for only after a signed offer, through an HR portal</span></li>
+          <li style="--i:5"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span><span>Links go to the company's own website, in full</span></li>
+          <li style="--i:6"><span class="mk"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span><span>You get time to read the offer and ask questions</span></li>
+        </ul>
+      </article>
+    </div>
+    <p class="cmp-note"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>A clean-looking message can still be a scam, and an odd-looking one can still be real. That is why LegitCheck never says "safe". It shows you what it found and leaves the call to you.</p>
+  </div>
+</section>
+
+<!-- ============ BENTO: RULES ============ -->
+<section class="section" aria-labelledby="rulesTitle">
+  <div class="wrap">
+    <div class="section-head split">
+      <div style="display:grid;gap:16px">
+        <span class="eyebrow">The rules it checks</span>
+        <h2 id="rulesTitle">Each warning sign is a rule you can read.</h2>
+      </div>
+      <p class="lede">No black box. Every flag in a report comes from one of these checks, and each one quotes the words that triggered it.</p>
+    </div>
+    <div class="bento" id="bento">
+      <article class="tile w2">
+        <span class="chip chip-high sev-tag"><span class="dot"></span>High</span>
+        <h3>Asks you to pay to get the job</h3>
+        <p>Registration fees, training kits, "refundable" deposits. Real employers pay you, not the other way round.</p>
+        <div class="mock">
+          <div class="mock-row"><span>To confirm your seat, pay a <span class="x">registration fee of ₹1,999</span></span></div>
+          <div class="mock-row" style="margin-top:6px"><span>Also matches</span><span><b>training fee</b> · <b>security deposit</b> · <b>kit charges</b></span></div>
+        </div>
+      </article>
+      <article class="tile">
+        <span class="chip chip-warn sev-tag"><span class="dot"></span>Warning</span>
+        <h3>HR only on Telegram or WhatsApp</h3>
+        <p>No office, no company number, just a chat handle.</p>
+        <div class="mock mock-chat">
+          <span class="bubble">Hi, is this the HR team?</span>
+          <span class="bubble me">Yes. Continue on <span class="y">Telegram @hr_desk</span></span>
+        </div>
+      </article>
+      <article class="tile">
+        <span class="chip chip-warn sev-tag"><span class="dot"></span>Warning</span>
+        <h3>Company name, personal email</h3>
+        <p>The sender's domain should match the company's website.</p>
+        <div class="mock">
+          <div class="mock-row"><span class="okc">careers@nexora.in</span><svg class="icon" style="width:14px;height:14px;color:var(--ok)" aria-hidden="true"><use href="#i-check"/></svg></div>
+          <div class="mock-row"><span>nexora.hr.team@<span class="y">gmail.com</span></span><svg class="icon" style="width:14px;height:14px;color:var(--warn)" aria-hidden="true"><use href="#i-flag"/></svg></div>
+        </div>
+      </article>
+      <article class="tile">
+        <span class="chip chip-high sev-tag"><span class="dot"></span>High</span>
+        <h3>"Like videos and earn"</h3>
+        <p>Paid tasks that start small and end with a deposit to "unlock" more.</p>
+        <div class="mock">
+          <div class="mock-row"><span>Task earnings</span><b class="tick-count" data-tick>₹50</b></div>
+          <div class="mock-row"><span>To withdraw</span><span class="x">deposit ₹500</span></div>
+        </div>
+      </article>
+      <article class="tile">
+        <span class="chip chip-high sev-tag"><span class="dot"></span>High</span>
+        <h3>Early ID or bank details</h3>
+        <p>Aadhaar, PAN, bank account or OTP before any interview.</p>
+        <div class="mock">
+          <div>Aadhaar <span class="redact" style="width:72px"></span> <span class="redact" style="width:34px"></span></div>
+          <div>PAN <span class="redact" style="width:88px"></span></div>
+          <div style="margin-top:4px"><span class="x">Send by 6 PM</span></div>
+        </div>
+      </article>
+      <article class="tile">
+        <span class="chip chip-warn sev-tag"><span class="dot"></span>Warning</span>
+        <h3>Short or lookalike links</h3>
+        <p>We show where a link would really take you.</p>
+        <div class="mock">
+          <span class="link-swap" aria-label="bit.ly/nx-onboard expands to nex0ra-careers.co/pay">
+            <span>bit.ly/nx-onboard</span>
+            <span><span class="y">nex0ra</span>-careers.co/pay</span>
+          </span>
+          <div style="margin-top:4px">zero, not the letter o</div>
+        </div>
+      </article>
+      <article class="tile">
+        <span class="chip chip-warn sev-tag"><span class="dot"></span>Warning</span>
+        <h3>Pressure to decide fast</h3>
+        <p>Deadlines in minutes so you don't stop to check.</p>
+        <div class="mock mock-row" style="align-items:center">
+          <span>Reply within</span><span class="timer" data-timer aria-label="29 minutes 59 seconds countdown, example">29:59</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VERDICT SCREEN ============ -->
+<section class="section alt" id="report" aria-labelledby="reportTitle">
+  <div class="wrap">
+    <div class="section-head split">
+      <div style="display:grid;gap:16px">
+        <span class="eyebrow">Sample report</span>
+        <h2 id="reportTitle">Every flag points at the words that caused it.</h2>
+      </div>
+      <p class="lede">Tap a highlighted phrase to see which rule it triggered and why that matters. The score is a second opinion from the model. The decision area at the bottom is yours.</p>
+    </div>
+
+    <div class="verdict-screen" id="verdictScreen">
+      <div class="vs-top">
+        <div class="left">
+          <span class="chip chip-high" style="height:32px;font-size:13px"><span class="dot"></span>High risk</span>
+          <span style="font-size:var(--t-sm);color:var(--ink-2)">5 warning signs · checked just now</span>
+        </div>
+        <span class="tag-fiction">Fictional example</span>
+      </div>
+      <div class="vs-grid">
+        <div class="vs-doc">
+          <div class="meta">
+            <span>WhatsApp message, forwarded by a student</span>
+            <span>Sender: +91 9xxxx xxxxx · "Skyline Digital Media HR"</span>
+          </div>
+          <div class="vs-text" id="vsText">
+            <p>Hi! I am Priya from Skyline Digital Media. We have a part-time job for college students: <span role="button" tabindex="0" class="rule-mark" data-rule="task" aria-pressed="false">like YouTube videos and earn ₹50 per like<sup>1</sup></span>. Many students make ₹3,000 a day. <span role="button" tabindex="0" class="rule-mark warn" data-rule="noint" aria-pressed="false">No interview needed<sup>2</sup></span>.</p>
+            <p>To start, <span role="button" tabindex="0" class="rule-mark warn" data-rule="wa" aria-pressed="false">join our WhatsApp group<sup>3</sup></span>. To unlock premium tasks, pay a <span role="button" tabindex="0" class="rule-mark" data-rule="deposit" aria-pressed="false">refundable security deposit of ₹500<sup>4</sup></span>. Share your <span role="button" tabindex="0" class="rule-mark" data-rule="bank" aria-pressed="false">bank account number and IFSC<sup>5</sup></span> for salary.</p>
+            <p>Reply soon, slots are filling.</p>
+          </div>
+          <p class="vs-hint"><svg class="icon" aria-hidden="true"><use href="#i-pointer"/></svg>Tap or focus a highlighted phrase. Use the number buttons to step through.</p>
+        </div>
+
+        <div class="vs-side">
+          <div>
+            <div class="rule-card" id="ruleCard" aria-live="polite"></div>
+            <div class="rule-nav" role="group" aria-label="Warning signs">
+              <button type="button" data-rule="task" aria-pressed="false" aria-label="Warning sign 1">1</button>
+              <button type="button" data-rule="noint" aria-pressed="false" aria-label="Warning sign 2">2</button>
+              <button type="button" data-rule="wa" aria-pressed="false" aria-label="Warning sign 3">3</button>
+              <button type="button" data-rule="deposit" aria-pressed="false" aria-label="Warning sign 4">4</button>
+              <button type="button" data-rule="bank" aria-pressed="false" aria-label="Warning sign 5">5</button>
+            </div>
+          </div>
+
+          <div class="score-block">
+            <svg class="gauge" viewBox="0 0 132 76" role="img" aria-label="Model score 0.91 out of 1, example value">
+              <path d="M10 70 A56 56 0 0 1 122 70" fill="none" stroke="var(--rule)" stroke-width="10" stroke-linecap="round"/>
+              <path id="gaugeArc" d="M10 70 A56 56 0 0 1 122 70" fill="none" stroke="var(--high)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+              <text x="66" y="64" text-anchor="middle" font-size="22" font-weight="600" fill="var(--ink)" id="gaugeText">0.00</text>
+            </svg>
+            <p class="lbl"><strong>Model score: 0.91 (example)</strong>How similar this message is to known scam postings, from 0 to 1. It is a likelihood, not proof.</p>
+          </div>
+
+          <div class="words">
+            <h4>Top contributing words</h4>
+            <div class="word"><code>security deposit</code><span class="bar"><i style="--w:92%"></i></span><span class="v">.31</span></div>
+            <div class="word"><code>earn per like</code><span class="bar"><i style="--w:74%"></i></span><span class="v">.24</span></div>
+            <div class="word"><code>whatsapp group</code><span class="bar"><i style="--w:52%"></i></span><span class="v">.17</span></div>
+            <div class="word"><code>no interview</code><span class="bar"><i style="--w:38%"></i></span><span class="v">.12</span></div>
+            <div class="word"><code>unlock</code><span class="bar"><i style="--w:22%"></i></span><span class="v">.07</span></div>
+            <p class="fine">Example values for this concept. Real weights come from the trained model.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="you-decide">
+        <div>
+          <span class="eyebrow">You decide</span>
+          <h3 style="margin-top:12px">We found warning signs. Whether to reply is your call.</h3>
+          <p class="why">LegitCheck can be wrong in both directions. Five minutes with this checklist will tell you more than any score.</p>
+          <div class="decide-actions">
+            <button class="btn btn-primary btn-sm" type="button" data-toast="Good call. Check the company's own website before you reply.">I'll verify first</button>
+            <a class="btn btn-ghost btn-sm" href="https://cybercrime.gov.in" target="_blank" rel="noopener">Report it <svg class="icon" style="width:14px;height:14px" aria-hidden="true"><use href="#i-external"/></svg></a>
+          </div>
+        </div>
+        <fieldset class="checklist" style="border:0;padding:0;margin:0">
+          <legend class="sr-only">Verification checklist</legend>
+          <div class="check-progress"><h4 style="margin:0">Verification checklist</h4><span id="checkCount">0 of 5 done</span></div>
+          <label class="check-item"><input type="checkbox"><span><span class="ct">Find the company's official careers page</span><small>Search the company name yourself. Don't use links from the message.</small></span></label>
+          <label class="check-item"><input type="checkbox"><span><span class="ct">Never pay to get a job</span><small>No genuine employer charges fees, deposits or training costs.</small></span></label>
+          <label class="check-item"><input type="checkbox"><span><span class="ct">Check the HR email domain</span><small>It should match the company's website, not @gmail.com or @yahoo.com.</small></span></label>
+          <label class="check-item"><input type="checkbox"><span><span class="ct">Search the company name + "scam"</span><small>Read what other students have reported.</small></span></label>
+          <label class="check-item"><input type="checkbox"><span><span class="ct">Report it</span><small>At <a href="https://cybercrime.gov.in" target="_blank" rel="noopener">cybercrime.gov.in</a> or call <a href="tel:1930">1930</a>.</small></span></label>
+        </fieldset>
+      </div>
+    </div>
+
+    <div class="levels">
+      <div class="level"><span class="chip chip-ok" style="justify-self:start"><span class="dot"></span>Looks consistent with genuine postings</span><p>No rule fired and the model score is low. Still verify the company before sharing documents.</p></div>
+      <div class="level"><span class="chip chip-warn" style="justify-self:start"><span class="dot"></span>Has warning signs</span><p>One or two flags, or a middling score. Worth asking questions before you go further.</p></div>
+      <div class="level"><span class="chip chip-high" style="justify-self:start"><span class="dot"></span>High risk</span><p>A fee, deposit, early ID request or task scam pattern, or several flags together.</p></div>
+    </div>
+    <p class="cmp-note" style="margin-top:16px"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>There is no "safe" verdict, on purpose. A tool reading one message can't know that a company is real.</p>
+  </div>
+</section>
+
+<!-- ============ STATS ============ -->
+<section class="section" aria-labelledby="statsTitle">
+  <div class="wrap">
+    <div class="section-head split">
+      <div style="display:grid;gap:16px">
+        <span class="eyebrow">How well it works</span>
+        <h2 id="statsTitle">Numbers go here after testing. Not before.</h2>
+      </div>
+      <p class="lede">These slots stay empty until the model is measured on postings it never saw in training. Each one says what it means in plain words.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="k">PR-AUC</span><span class="tbd"><span class="slot" aria-hidden="true"></span><span class="sr-only">Not measured yet</span></span><span class="tbd-note">TBD from test set</span><p>How well the model ranks scams above genuine posts. 1.0 is perfect. A random guess scores about the share of scams in the data.</p></div>
+      <div class="stat"><span class="k">Recall at 90% precision</span><span class="tbd"><span class="slot" aria-hidden="true"></span><span class="sr-only">Not measured yet</span></span><span class="tbd-note">TBD from test set</span><p>Out of all real scams, how many we catch while 9 in 10 of our high-risk flags are correct.</p></div>
+      <div class="stat"><span class="k">False alarms on genuine posts</span><span class="tbd"><span class="slot" aria-hidden="true"></span><span class="sr-only">Not measured yet</span></span><span class="tbd-note">TBD from test set</span><p>How often a real posting gets flagged. Lower means fewer good offers scare you off.</p></div>
+      <div class="stat"><span class="k">Test postings</span><span class="tbd"><span class="slot" aria-hidden="true"></span><span class="sr-only">Not measured yet</span></span><span class="tbd-note">TBD from test set</span><p>How many held-out postings the numbers above are based on.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STEPS ============ -->
+<section class="section alt" id="how" aria-labelledby="howTitle">
+  <div class="wrap">
+    <div class="section-head split">
+      <div style="display:grid;gap:16px">
+        <span class="eyebrow">How to check an offer</span>
+        <h2 id="howTitle">Five steps. The last one is yours.</h2>
+      </div>
+      <p class="lede">From "this looks too good" to a decision you can explain, in about two minutes.</p>
+    </div>
+    <div class="steps-wrap" id="steps">
+      <div class="steps-track" aria-hidden="true"><i></i></div>
+      <ol class="steps">
+        <li class="step"><span class="step-dot">01</span><div class="step-body"><h3>Paste</h3><p>Copy the whole message, including the sender's email and any link. On desktop, select it and use the extension.</p><div class="step-mini">"Dear Candidate, you are shortlisted…"<br>nexora.hr.team@gmail.com</div></div></li>
+        <li class="step"><span class="step-dot">02</span><div class="step-body"><h3>We check</h3><p>Rules look for known scam patterns. A model trained on labelled postings gives a second opinion.</p><div class="step-mini">7 rules · 1 model<br>under 2 seconds</div></div></li>
+        <li class="step"><span class="step-dot">03</span><div class="step-body"><h3>Read the flags</h3><p>Each flag quotes the words that triggered it and explains why it matters.</p><div class="step-mini"><span class="chip chip-high">Asks for a fee</span><br>"registration fee of ₹1,999"</div></div></li>
+        <li class="step"><span class="step-dot">04</span><div class="step-body"><h3>Verify</h3><p>Official careers page, email domain, a quick search for the company name plus "scam".</p><div class="step-mini">[x] careers page<br>[ ] email domain</div></div></li>
+        <li class="step"><span class="step-dot">05</span><div class="step-body"><h3>Decide</h3><p>Reply, ask questions, walk away or report. We don't make the call for you.</p><div class="step-mini">Report: cybercrime.gov.in<br>Helpline: 1930</div></div></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PASTE ============ -->
+<section class="section" id="check" aria-labelledby="checkTitle">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Try it</span>
+      <h2 id="checkTitle">Paste the offer you got.</h2>
+      <p class="lede">In this concept, a few simple rules run in your browser so you can feel the flow. The real app adds the model and the full rule set.</p>
+    </div>
+    <div class="paste-grid">
+      <form class="paste-card" id="pasteForm" novalidate>
+        <div class="field" id="textField">
+          <label for="offerText">Offer message or job posting</label>
+          <textarea id="offerText" name="offer" placeholder="Paste the full message here, including who sent it…" aria-describedby="offerHelp offerErr"></textarea>
+          <span class="help" id="offerHelp">Nothing you paste is stored. At least 40 characters.</span>
+          <span class="err-msg" id="offerErr" role="alert"><svg class="icon" style="width:16px;height:16px" aria-hidden="true"><use href="#i-info"/></svg><span>Paste the message first. It needs at least 40 characters to check.</span></span>
+        </div>
+        <div class="field">
+          <label for="offerFrom">Sender's email or link <span style="color:var(--ink-3);font-weight:400">(optional)</span></label>
+          <input id="offerFrom" name="from" type="text" inputmode="email" autocomplete="off" placeholder="hr@company.com or https://…">
+        </div>
+        <div class="samples"><span>No message handy?</span>
+          <button class="btn btn-ghost btn-sm" type="button" data-sample="scam">Use a fictional scam</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-sample="real">Use a fictional genuine offer</button>
+        </div>
+        <div class="paste-actions">
+          <span class="counts" id="charCount">0 characters</span>
+          <button class="btn btn-accent magnetic" type="submit" id="checkBtn"><span class="spinner" aria-hidden="true"></span><span class="lbl">Check this offer</span></button>
+        </div>
+      </form>
+
+      <div class="result" id="result" aria-live="polite">
+        <div class="result-empty">
+          <svg viewBox="0 0 120 96" aria-hidden="true">
+            <rect x="18" y="8" width="72" height="84" rx="8" fill="var(--surface)" stroke="var(--line-2)" stroke-width="1.5"/>
+            <rect x="28" y="22" width="44" height="5" rx="2.5" fill="var(--line)"/>
+            <rect x="26" y="34" width="56" height="9" rx="3" fill="var(--warn-mark)"/>
+            <rect x="28" y="50" width="38" height="5" rx="2.5" fill="var(--line)"/>
+            <rect x="28" y="62" width="48" height="5" rx="2.5" fill="var(--line)"/>
+            <circle cx="88" cy="66" r="16" fill="none" stroke="var(--ink)" stroke-width="3"/>
+            <path d="M99 78l12 12" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <h3>Your report appears here</h3>
+          <p style="max-width:34ch">Paste a message and press Check. Flags show up with the exact words highlighted.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXTENSION ============ -->
+<section class="section alt" id="extension" aria-labelledby="extTitle">
+  <div class="wrap ext-grid">
+    <div>
+      <span class="eyebrow">Chrome extension</span>
+      <h2 id="extTitle" style="margin-top:16px">Check it where you found it.</h2>
+      <p class="lede" style="margin-top:16px">On LinkedIn, Internshala, Gmail or WhatsApp Web, select the offer text and right-click. The popup shows the verdict and the top flags without leaving the page.</p>
+      <ol class="ext-points">
+        <li><span><b>Select the text</b> of the offer or posting.</span></li>
+        <li><span><b>Right-click, "Check with LegitCheck".</b> Only the selected text is sent.</span></li>
+        <li><span><b>Read the verdict and top 3 flags,</b> then open the full report if you want the details.</span></li>
+      </ol>
+      <p class="fine" style="margin-top:16px">Extensions work on desktop Chrome only. On your phone, paste into the web app.</p>
+    </div>
+    <iframe class="ext-frame" src="extension-popup.html" title="LegitCheck Chrome extension popup preview" loading="lazy"></iframe>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="section" id="faq" aria-labelledby="faqTitle">
+  <div class="wrap faq-grid">
+    <div style="display:grid;gap:16px;align-content:start">
+      <span class="eyebrow">Questions</span>
+      <h2 id="faqTitle">Straight answers.</h2>
+      <p class="lede">If you have already paid someone, go to the third tab now.</p>
+    </div>
+    <div>
+      <div class="tabs" role="tablist" aria-label="FAQ categories">
+        <button class="tab" role="tab" id="tab-model" aria-controls="panel-model" aria-selected="true">About the model</button>
+        <button class="tab" role="tab" id="tab-privacy" aria-controls="panel-privacy" aria-selected="false" tabindex="-1">Privacy</button>
+        <button class="tab urgent" role="tab" id="tab-paid" aria-controls="panel-paid" aria-selected="false" tabindex="-1">If you've already paid</button>
+      </div>
+
+      <div class="tabpanel" role="tabpanel" id="panel-model" aria-labelledby="tab-model" tabindex="0">
+        <details class="qa" open><summary>What does the score mean?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>It is the model's estimate, from 0 to 1, of how much the message resembles postings that were labelled as fake. It is a likelihood, not proof. The flags underneath tell you why.</p></div></details>
+        <details class="qa"><summary>Can it be wrong?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>Yes, in both directions. A careful scammer can write a clean message, and a small genuine company can use a Gmail address. Treat the report as a second pair of eyes, then verify.</p></div></details>
+        <details class="qa"><summary>Why does it never say "safe"?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>Reading one message can't prove a company is real. The best verdict is "Looks consistent with genuine postings", which means no warning signs were found, not that there are none.</p></div></details>
+        <details class="qa"><summary>What was it trained on?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>A public dataset of job postings labelled real or fake, plus hand-written rules for scam patterns common in India, like registration fees and task scams. The rules explain, the model adds a second opinion.</p></div></details>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="panel-privacy" aria-labelledby="tab-privacy" tabindex="0" hidden>
+        <details class="qa" open><summary>Is what I paste stored?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>No. The text is checked and thrown away. We only count that a check happened and which verdict it got, with no text, email or link attached.</p></div></details>
+        <details class="qa"><summary>Does the extension read my pages?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>Only the text you select and choose to check. It does not read pages in the background or track where you browse.</p></div></details>
+        <details class="qa"><summary>Do I need an account?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>No. Open the page, paste, check.</p></div></details>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="panel-paid" aria-labelledby="tab-paid" tabindex="0" hidden>
+        <details class="qa" open><summary>I already paid a fee. What do I do?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p><strong>Call 1930 immediately.</strong> It is the National Cyber Crime Helpline. The sooner you report, the better the chance the money can be held before it moves.</p><p>Then file a complaint at <a href="https://cybercrime.gov.in" target="_blank" rel="noopener">cybercrime.gov.in</a>.</p></div></details>
+        <details class="qa"><summary>Should I contact my bank?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>Yes. Call the number on the back of your card or in your bank's official app. Tell them it was a fraud payment and ask them to raise a dispute. Keep the UTR or transaction ID.</p></div></details>
+        <details class="qa"><summary>I shared my Aadhaar, PAN or bank details.<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>Report it the same way, and tell your bank. You can lock your Aadhaar biometrics on the official UIDAI website or app. Watch for unexpected loan or OTP messages.</p></div></details>
+        <details class="qa"><summary>What should I save as evidence?<span class="pm" aria-hidden="true"><svg class="icon" style="width:14px;height:14px"><use href="#i-cross"/></svg></span></summary><div class="ans"><p>Screenshots of the chat, the sender's number or handle, email addresses, UPI IDs, links and payment receipts. Don't delete the conversation.</p></div></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" aria-labelledby="helpTitle" style="padding-bottom:var(--s9)">
+  <div class="help-band">
+    <div>
+      <h2 id="helpTitle">Already paid someone? Call 1930 now.</h2>
+      <p>The National Cyber Crime Helpline. Reporting within the first hours gives the best chance of stopping the money. Then file at cybercrime.gov.in and call your bank.</p>
+    </div>
+    <div class="btns">
+      <a class="btn btn-call magnetic" href="tel:1930"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Call 1930</a>
+      <a class="btn btn-out" href="https://cybercrime.gov.in" target="_blank" rel="noopener">cybercrime.gov.in <svg class="icon" style="width:16px;height:16px" aria-hidden="true"><use href="#i-external"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TOKEN LEGEND ============ -->
+<section class="wrap" aria-labelledby="tokensTitle" style="padding-bottom:var(--s8)">
+  <div class="legend">
+    <div style="display:grid;gap:8px">
+      <span class="eyebrow">Concept only</span>
+      <h2 id="tokensTitle" style="font-size:var(--t-2xl)">Design tokens</h2>
+      <p style="color:var(--ink-2);font-size:var(--t-sm);max-width:70ch">Light is the default, because the product is about reading a document. Dark follows your system setting, and the toggle overrides it. Swatches below change with the theme.</p>
+    </div>
+    <div>
+      <h3>Colour</h3>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="legend-row">
+      <div>
+        <h3>Type · Geist / Geist Mono</h3>
+        <div class="type-scale">
+          <div><code>display</code><span style="font-size:40px;font-weight:600">Read it</span></div>
+          <div><code>3xl 32–48</code><span style="font-size:32px;font-weight:600">Section</span></div>
+          <div><code>xl 22</code><span style="font-size:22px;font-weight:600">Card title</span></div>
+          <div><code>base 16</code><span>Body text for reading</span></div>
+          <div><code>sm 14</code><span style="font-size:14px">Supporting text</span></div>
+          <div><code>mono 13</code><span style="font:13px var(--mono)">registration fee of ₹1,999</span></div>
+        </div>
+      </div>
+      <div>
+        <h3>Spacing · 4/8 scale</h3>
+        <div class="spaces">
+          <span><i style="height:4px"></i>4</span><span><i style="height:8px"></i>8</span><span><i style="height:12px"></i>12</span><span><i style="height:16px"></i>16</span><span><i style="height:24px"></i>24</span><span><i style="height:32px"></i>32</span><span><i style="height:48px"></i>48</span><span><i style="height:64px"></i>64</span>
+        </div>
+        <h3 style="margin-top:24px">Radius</h3>
+        <div class="radii"><span style="border-radius:8px">8</span><span style="border-radius:12px">12</span><span style="border-radius:16px">16</span><span style="border-radius:20px">20</span></div>
+      </div>
+      <div>
+        <h3>Motion</h3>
+        <ul class="motion-list">
+          <li><b>120ms</b> hover, press, colour</li>
+          <li><b>180ms</b> theme, tabs, toggles</li>
+          <li><b>spring 260/20</b> flag rows settle</li>
+          <li><b>spring 320/14</b> verdict stamp lands</li>
+          <li><b>spring 180/16</b> magnetic buttons, tilt return</li>
+          <li><b>~8s</b> demo scan, pausable</li>
+          <li><b>reduced motion</b> final states, no loop</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>LegitCheck · design concept</span>
+    <span>Helps you read an offer. Does not certify any company.</span>
+  </div>
+</footer>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------- Spring physics ---------- */
+  // Semi-implicit Euler integration of a damped spring; returns a cancel function.
+  function spring(opts) {
+    var x = opts.from, v = opts.velocity || 0, to = opts.to;
+    var k = opts.stiffness || 200, c = opts.damping || 18, m = opts.mass || 1;
+    var last = performance.now(), raf;
+    if (reduce.matches) { opts.onUpdate(to); if (opts.onDone) opts.onDone(); return function () {}; }
+    function step(now) {
+      var dt = Math.min(0.032, (now - last) / 1000); last = now;
+      var a = (-k * (x - to) - c * v) / m;
+      v += a * dt; x += v * dt;
+      opts.onUpdate(x);
+      if (Math.abs(v) < 0.005 && Math.abs(x - to) < 0.0005) { opts.onUpdate(to); if (opts.onDone) opts.onDone(); return; }
+      raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+    return function () { cancelAnimationFrame(raf); };
+  }
+
+  // Continuous 2D spring follower used by magnetic buttons and tilt cards.
+  function Follower(apply, k, c) {
+    this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.tx = 0; this.ty = 0;
+    this.k = k || 180; this.c = c || 16; this.apply = apply; this.raf = 0; this.last = 0;
+  }
+  Follower.prototype.set = function (tx, ty) {
+    this.tx = tx; this.ty = ty;
+    if (reduce.matches) { this.apply(0, 0); return; }
+    if (!this.raf) { this.last = performance.now(); this.raf = requestAnimationFrame(this.tick.bind(this)); }
+  };
+  Follower.prototype.tick = function (now) {
+    var dt = Math.min(0.032, (now - this.last) / 1000); this.last = now;
+    this.vx += (-this.k * (this.x - this.tx) - this.c * this.vx) * dt;
+    this.vy += (-this.k * (this.y - this.ty) - this.c * this.vy) * dt;
+    this.x += this.vx * dt; this.y += this.vy * dt;
+    this.apply(this.x, this.y);
+    var settled = Math.abs(this.vx) + Math.abs(this.vy) < 0.01 && Math.abs(this.x - this.tx) + Math.abs(this.y - this.ty) < 0.01;
+    if (settled) { this.raf = 0; this.apply(this.tx, this.ty); return; }
+    this.raf = requestAnimationFrame(this.tick.bind(this));
+  };
+
+  /* ---------- Theme ---------- */
+  var root = document.documentElement, toggle = $('#themeToggle');
+  var sysDark = window.matchMedia('(prefers-color-scheme: dark)');
+  function isDark() { return root.dataset.theme ? root.dataset.theme === 'dark' : sysDark.matches; }
+  function syncToggle() { toggle.setAttribute('aria-label', isDark() ? 'Switch to light mode' : 'Switch to dark mode'); }
+  toggle.addEventListener('click', function () {
+    root.dataset.theme = isDark() ? 'light' : 'dark';
+    try { localStorage.setItem('lc-theme', root.dataset.theme); } catch (e) {}
+    syncToggle(); renderSwatches();
+    var frame = $('.ext-frame');
+    if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 'lc-theme', theme: root.dataset.theme }, window.location.origin === 'null' ? '*' : window.location.origin);
+  });
+  sysDark.addEventListener('change', function () { syncToggle(); renderSwatches(); });
+  syncToggle();
+
+  var header = $('.site-header');
+  window.addEventListener('scroll', function () { header.classList.toggle('scrolled', window.scrollY > 8); }, { passive: true });
+
+  /* ---------- Headline word reveal ---------- */
+  (function splitHeadline() {
+    var h = $('#heroTitle'), i = 0;
+    function wrapWords(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+        if (n.nodeType === 3) {
+          var frag = document.createDocumentFragment();
+          n.textContent.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
+            var s = document.createElement('span'); s.className = 'w'; s.style.setProperty('--i', i++); s.textContent = part; s.setAttribute('aria-hidden', 'true');
+            frag.appendChild(s);
+          });
+          n.parentNode.replaceChild(frag, n);
+        } else if (n.nodeType === 1) { wrapWords(n); }
+      });
+    }
+    wrapWords(h);
+    requestAnimationFrame(function () { h.classList.add('go'); });
+  })();
+
+  /* ---------- Magnetic buttons ---------- */
+  if (finePointer.matches) {
+    $$('.magnetic').forEach(function (el) {
+      var f = new Follower(function (x, y) { el.style.setProperty('--bx', x.toFixed(2) + 'px'); el.style.setProperty('--by', y.toFixed(2) + 'px'); }, 220, 14);
+      el.addEventListener('pointermove', function (e) {
+        var r = el.getBoundingClientRect();
+        var dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+        f.set(Math.max(-8, Math.min(8, dx * 0.22)), Math.max(-6, Math.min(6, dy * 0.3)));
+      });
+      el.addEventListener('pointerleave', function () { f.set(0, 0); });
+    });
+  }
+
+  /* ---------- Bento tilt ---------- */
+  if (finePointer.matches) {
+    $$('.tile').forEach(function (el) {
+      var f = new Follower(function (x, y) { el.style.setProperty('--ry', x.toFixed(2) + 'deg'); el.style.setProperty('--rx', y.toFixed(2) + 'deg'); }, 160, 14);
+      el.addEventListener('pointermove', function (e) {
+        var r = el.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
+        f.set(px * 6, -py * 6);
+      });
+      el.addEventListener('pointerleave', function () { f.set(0, 0); });
+    });
+  }
+
+  /* ---------- Reveal on view ---------- */
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+  }, { threshold: 0.2 });
+  ['#compare', '#verdictScreen', '#bento'].forEach(function (s) { var el = $(s); if (el) io.observe(el); });
+
+  /* ---------- Bento live bits ---------- */
+  (function bentoLive() {
+    var tick = $('[data-tick]'), timer = $('[data-timer]'), t = 29 * 60 + 59, earn = 50;
+    if (reduce.matches) return;
+    setInterval(function () {
+      if (document.hidden) return;
+      t = t <= 0 ? 29 * 60 + 59 : t - 1;
+      timer.textContent = String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+      earn = earn >= 950 ? 50 : earn + 50;
+      tick.textContent = '₹' + earn.toLocaleString('en-IN');
+    }, 1000);
+    if (!finePointer.matches) {
+      var linkTile = $('.link-swap').closest('.tile');
+      setInterval(function () { linkTile.classList.toggle('auto'); }, 2200);
+    }
+  })();
+
+  /* ---------- Hero demo scan ---------- */
+  var RULES = {
+    gmail: { t: 'Company name, personal Gmail', sev: 'warn' },
+    fee: { t: 'Asks you to pay a fee', sev: 'high' },
+    id: { t: 'Wants Aadhaar/PAN early', sev: 'high' },
+    tg: { t: 'HR only on Telegram', sev: 'warn' },
+    link: { t: 'Shortened link hides destination', sev: 'warn' },
+    urgent: { t: 'Pressure to decide today', sev: 'warn' }
+  };
+  var demo = { run: 0, userPaused: false, offscreen: true, started: false, count: 0 };
+  var doc = $('#demoDoc'), bar = $('#scanbar'), flagsBox = $('#demoFlags'), statusEl = $('#demoStatus');
+  var lines = $$('.ln', doc), stamp = $('#stamp'), decide = $('#decide');
+  var scoreVal = $('#scoreVal'), scoreBar = $('#scoreBar'), demoEl = $('#demo');
+
+  function paused() { return demo.userPaused || demo.offscreen || document.hidden; }
+  function wait(ms, id) {
+    return new Promise(function (res) {
+      var left = ms, last = performance.now();
+      function tick(now) {
+        if (id !== demo.run) return res(false);
+        if (!paused()) left -= now - last;
+        last = now;
+        if (left <= 0) return res(true);
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+  function setStage(stage, text) {
+    $$('.stages li').forEach(function (li) {
+      li.classList.toggle('on', li.dataset.stage === stage);
+      li.classList.toggle('done', stage === 'done');
+    });
+    statusEl.textContent = text;
+  }
+  function moveBar(ln) {
+    bar.style.opacity = '1';
+    bar.style.height = ln.offsetHeight + 'px';
+    bar.style.transform = 'translateY(' + (ln.offsetTop) + 'px)';
+  }
+  function addFlag(key, mark) {
+    var r = RULES[key]; demo.count++;
+    var num = document.createElement('span');
+    num.className = 'num' + (r.sev === 'warn' ? ' warn' : ''); num.textContent = demo.count; num.setAttribute('aria-hidden', 'true');
+    mark.closest('.ln').appendChild(num);
+    spring({ from: 0, to: 1, stiffness: 420, damping: 16, onUpdate: function (p) { num.style.transform = 'scale(' + Math.max(0, p) + ')'; } });
+
+    var row = document.createElement('div');
+    row.className = 'flag-row' + (r.sev === 'warn' ? ' warn' : '');
+    row.innerHTML = '<span class="n" aria-hidden="true">' + demo.count + '</span><span class="t">' + r.t + '<span class="q">"' + mark.textContent + '"</span></span><span class="sev">' + (r.sev === 'high' ? 'High' : 'Warn') + '</span>';
+    flagsBox.appendChild(row);
+    $('#flagCount').textContent = demo.count;
+    spring({ from: 0, to: 1, stiffness: 260, damping: 20, onUpdate: function (p) {
+      row.style.opacity = Math.min(1, Math.max(0, p * 1.4));
+      row.style.transform = 'translate(' + ((1 - p) * 28).toFixed(2) + 'px,' + ((1 - p) * 6).toFixed(2) + 'px) rotate(' + ((1 - p) * 2.5).toFixed(2) + 'deg)';
+    } });
+  }
+  function setScore(v) {
+    scoreVal.textContent = v.toFixed(2);
+    scoreBar.style.width = (v * 100) + '%';
+    scoreBar.style.setProperty('--full', demoEl.querySelector('.meter').offsetWidth + 'px');
+  }
+  function showVerdict() {
+    stamp.setAttribute('aria-hidden', 'false');
+    spring({ from: 0, to: 1, stiffness: 320, damping: 14, onUpdate: function (p) {
+      stamp.style.opacity = Math.min(1, p * 2);
+      stamp.style.transform = 'rotate(' + (-3 + (1 - p) * -6).toFixed(2) + 'deg) scale(' + (1.6 - 0.6 * p).toFixed(3) + ')';
+    } });
+    decide.classList.add('on');
+    demoEl.classList.add('finished');
+  }
+  function resetDemo() {
+    demo.count = 0;
+    $$('mark.hl', doc).forEach(function (m) { m.classList.remove('on'); });
+    $$('.num', doc).forEach(function (n) { n.remove(); });
+    $$('.flag-row', flagsBox).forEach(function (n) { n.remove(); });
+    $('#flagCount').textContent = '0';
+    stamp.style.opacity = '0'; stamp.style.transform = 'rotate(-3deg) scale(1.6)'; stamp.setAttribute('aria-hidden', 'true');
+    decide.classList.remove('on'); demoEl.classList.remove('finished');
+    bar.style.opacity = '0'; setScore(0);
+  }
+  function finalState() {
+    demo.run++; resetDemo();
+    $$('mark.hl', doc).forEach(function (m) { m.classList.add('on'); addFlag(m.dataset.flag, m); });
+    setScore(0.94); showVerdict();
+    setStage('done', 'Done: 6 warning signs. The decision is yours.');
+  }
+  async function runDemo() {
+    var id = ++demo.run; resetDemo();
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      setStage('reading', 'Reading line ' + (i + 1) + ' of ' + lines.length);
+      moveBar(ln);
+      if (!(await wait(480, id))) return;
+      setStage('checking', 'Checking line ' + (i + 1) + ' against 7 rules');
+      if (!(await wait(260, id))) return;
+      var marks = $$('mark.hl', ln);
+      for (var j = 0; j < marks.length; j++) {
+        setStage('flagging', 'Flagged: ' + RULES[marks[j].dataset.flag].t);
+        marks[j].classList.add('on');
+        addFlag(marks[j].dataset.flag, marks[j]);
+        if (!(await wait(720, id))) return;
+      }
+    }
+    bar.style.opacity = '0';
+    setStage('checking', 'Scoring the whole message with the model');
+    var start = performance.now();
+    while (true) {
+      if (!(await wait(16, id))) return;
+      var p = Math.min(1, (performance.now() - start) / 900);
+      setScore(0.94 * (1 - Math.pow(1 - p, 3)));
+      if (p >= 1) break;
+    }
+    showVerdict();
+    setStage('done', 'Done: 6 warning signs. The decision is yours.');
+    if (!(await wait(7000, id))) return;
+    runDemo();
+  }
+  var pauseBtn = $('#demoPause');
+  pauseBtn.addEventListener('click', function () {
+    demo.userPaused = !demo.userPaused;
+    pauseBtn.setAttribute('aria-label', demo.userPaused ? 'Resume demo' : 'Pause demo');
+    pauseBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-' + (demo.userPaused ? 'play' : 'pause') + '"/></svg>';
+  });
+  $('#demoReplay').addEventListener('click', function () {
+    if (reduce.matches) { finalState(); return; }
+    demo.userPaused = false; pauseBtn.setAttribute('aria-label', 'Pause demo');
+    pauseBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg>';
+    runDemo();
+  });
+  new IntersectionObserver(function (entries) {
+    demo.offscreen = !entries[0].isIntersecting;
+    if (entries[0].isIntersecting && !demo.started) {
+      demo.started = true;
+      if (reduce.matches) finalState(); else setTimeout(runDemo, 500);
+    }
+  }, { threshold: 0.25 }).observe(demoEl);
+
+  /* ---------- Verdict screen rule cards ---------- */
+  var RULE_INFO = {
+    task: { n: 1, sev: 'high', title: 'Paid to like videos', quote: 'like YouTube videos and earn ₹50 per like', why: 'Task scams pay small amounts at first to win trust, then ask for a deposit to "unlock" bigger tasks. The deposit is never returned.', genuine: 'Real jobs pay for work you agreed to in a contract, not per like or per review.' },
+    noint: { n: 2, sev: 'warn', title: 'No interview, instant selection', quote: 'No interview needed', why: 'Skipping the interview means nobody checked you, which usually means the "job" is not the point.', genuine: 'Even small companies talk to you or give you a test before an offer.' },
+    wa: { n: 3, sev: 'warn', title: 'HR only on a chat app', quote: 'join our WhatsApp group', why: 'Chat groups are easy to create and delete. There is no company number, office or email you can verify.', genuine: 'HR contacts you from a company email, and you can find the same people on the company website or LinkedIn.' },
+    deposit: { n: 4, sev: 'high', title: 'Asks for a deposit', quote: 'refundable security deposit of ₹500', why: '"Refundable" is the hook. Once paid, the next step is usually a bigger amount.', genuine: 'You never pay to get or keep a job or internship.' },
+    bank: { n: 5, sev: 'high', title: 'Bank details before any offer', quote: 'bank account number and IFSC', why: 'Your account can be used to move stolen money, which can get it frozen and put you in trouble.', genuine: 'Bank details are collected after you sign an offer, through an HR portal or a joining form.' }
+  };
+  var card = $('#ruleCard'), cancelCard = null;
+  function selectRule(key, animate) {
+    var r = RULE_INFO[key];
+    $$('[data-rule]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.rule === key)); });
+    card.className = 'rule-card' + (r.sev === 'warn' ? ' warn' : '');
+    card.innerHTML = '<div class="rc-head"><span class="chip ' + (r.sev === 'high' ? 'chip-high' : 'chip-warn') + '"><span class="dot"></span>' + (r.sev === 'high' ? 'High' : 'Warning') + '</span><span class="rc-id">Flag ' + r.n + ' of 5</span></div>' +
+      '<h3>' + r.title + '</h3><dl><div><dt>What we saw</dt><dd><q>' + r.quote + '</q></dd></div><div><dt>Why it matters</dt><dd>' + r.why + '</dd></div><div><dt>What genuine looks like</dt><dd>' + r.genuine + '</dd></div></dl>';
+    if (cancelCard) cancelCard();
+    if (animate) cancelCard = spring({ from: 0, to: 1, stiffness: 300, damping: 20, onUpdate: function (p) {
+      card.style.transform = 'translateY(' + ((1 - p) * 12).toFixed(2) + 'px) scale(' + (0.98 + 0.02 * p).toFixed(4) + ')';
+      card.style.opacity = Math.min(1, 0.3 + p);
+    } });
+  }
+  $$('[data-rule]').forEach(function (b) {
+    b.addEventListener('click', function () { selectRule(b.dataset.rule, true); });
+    b.addEventListener('keydown', function (e) {
+      if (b.tagName !== 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectRule(b.dataset.rule, true); }
+    });
+    if (b.classList.contains('rule-mark')) {
+      b.addEventListener('focus', function () { if (b.getAttribute('aria-pressed') !== 'true') selectRule(b.dataset.rule, true); });
+      if (finePointer.matches) b.addEventListener('mouseenter', function () { if (b.getAttribute('aria-pressed') !== 'true') selectRule(b.dataset.rule, true); });
+    }
+  });
+  selectRule('task', false);
+
+  var gaugeDone = false;
+  new IntersectionObserver(function (entries) {
+    if (!entries[0].isIntersecting || gaugeDone) return;
+    gaugeDone = true;
+    var arc = $('#gaugeArc'), txt = $('#gaugeText');
+    spring({ from: 0, to: 0.91, stiffness: 60, damping: 13, onUpdate: function (v) {
+      var c = Math.max(0, Math.min(1, v));
+      arc.setAttribute('stroke-dashoffset', String(100 - c * 100));
+      txt.textContent = c.toFixed(2);
+    } });
+  }, { threshold: 0.4 }).observe($('.score-block'));
+
+  var checks = $$('.check-item input');
+  checks.forEach(function (c) { c.addEventListener('change', function () {
+    var n = checks.filter(function (x) { return x.checked; }).length;
+    $('#checkCount').textContent = n + ' of 5 done';
+    if (n === 5) toast('All five checked. You now know more than the message wanted you to.');
+  }); });
+
+  /* ---------- Toasts ---------- */
+  function toast(msg) {
+    var t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status');
+    t.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span></span>';
+    t.querySelector('span').textContent = msg;
+    $('#toasts').appendChild(t);
+    spring({ from: 0, to: 1, stiffness: 320, damping: 22, onUpdate: function (p) { t.style.transform = 'translateY(' + ((1 - p) * 24) + 'px)'; t.style.opacity = Math.min(1, p * 1.5); } });
+    setTimeout(function () {
+      spring({ from: 1, to: 0, stiffness: 300, damping: 30, onUpdate: function (p) { t.style.opacity = Math.max(0, p); t.style.transform = 'translateY(' + ((1 - p) * 12) + 'px)'; }, onDone: function () { t.remove(); } });
+    }, 3600);
+  }
+  $$('[data-toast]').forEach(function (b) { b.addEventListener('click', function () { toast(b.dataset.toast); }); });
+
+  /* ---------- Steps progress ---------- */
+  (function steps() {
+    var wrap = $('#steps'), track = $('.steps-track', wrap), items = $$('.step', wrap), ticking = false;
+    function update() {
+      ticking = false;
+      var r = wrap.getBoundingClientRect(), vh = window.innerHeight;
+      var p = Math.max(0, Math.min(1, (vh * 0.75 - r.top) / (r.height + vh * 0.25)));
+      if (reduce.matches) p = 1;
+      track.style.setProperty('--p', p.toFixed(3));
+      var active = Math.min(items.length - 1, Math.floor(p * items.length));
+      items.forEach(function (it, i) { it.classList.toggle('on', p > 0.02 && i <= active); });
+    }
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  })();
+
+  /* ---------- Paste check (concept rules only) ---------- */
+  var CHECKS = [
+    { id: 'fee', sev: 'high', t: 'Asks you to pay a fee', re: /\b(registration|training|joining|processing|onboarding|kit)\s+(fee|fees|charge|charges|amount)\b(\s+of\s+(₹|rs\.?\s?|inr\s?)\s?[\d,]+)?/gi },
+    { id: 'deposit', sev: 'high', t: 'Asks for a deposit', re: /\b(refundable\s+)?security\s+deposit\b[^.\n]{0,16}|\bdeposit\s+(of\s+)?(₹|rs\.?|inr)\s?[\d,]+/gi },
+    { id: 'id', sev: 'high', t: 'Wants ID or bank details early', re: /\b(aadha?ar|pan\s*card|pan\b|bank\s+(account|details)|ifsc|otp|upi\s+pin)\b/gi },
+    { id: 'task', sev: 'high', t: 'Paid tasks (like/rate/review and earn)', re: /\b(like|subscribe|rate|review)\b[^.\n]{0,30}\b(earn|per\s+(like|task|video|review))\b[^.\n]{0,14}/gi },
+    { id: 'chat', sev: 'warn', t: 'HR only on Telegram or WhatsApp', re: /\b(telegram|whatsapp|wa\.me\/\S+|t\.me\/\S+)\b/gi },
+    { id: 'gmail', sev: 'warn', t: 'Personal email posing as a company', re: /\b[\w.+-]+@(gmail|yahoo|outlook|hotmail|rediffmail)\.com\b/gi },
+    { id: 'link', sev: 'warn', t: 'Shortened link hides destination', re: /\b(bit\.ly|tinyurl\.com|cutt\.ly|rb\.gy|is\.gd|t\.co|shorturl\.at)\/\S*/gi },
+    { id: 'urgent', sev: 'warn', t: 'Pressure to decide fast', re: /\b(only today|valid today|within \d+\s*(minutes|mins|hours|hrs)|immediately|urgent(ly)?|last chance|limited seats|seats are limited|expires? today)\b/gi },
+    { id: 'noint', sev: 'warn', t: 'No interview, instant selection', re: /\b(no interview|without (any )?interview|direct selection)\b/gi }
+  ];
+  var SAMPLES = {
+    scam: { text: 'Dear Candidate,\nCongratulations! You are selected for a Work From Home internship at Zentrova Infotech (fictional). Stipend ₹30,000/month. No interview required.\nTo confirm, pay the training fee of ₹2,499 and send your Aadhaar and PAN card photos.\nFor joining, message HR on Telegram @zentrova_hr.\nPay here: bit.ly/ztv-join\nThis offer is valid only today.', from: 'zentrova.careers.hr@gmail.com' },
+    real: { text: 'Hi Ananya,\nThank you for interviewing with Meridian Labs (fictional) last Thursday. We are happy to offer you a 6-month Frontend Intern role, starting 6 January, with a monthly stipend of ₹20,000.\nThe offer letter is attached. Please review it and reply with any questions by Friday 20 December. If you accept, our HR team will send onboarding forms through our HR portal.\nRegards,\nRohit Menon, Talent team', from: 'talent@meridianlabs.in' }
+  };
+  var form = $('#pasteForm'), ta = $('#offerText'), from = $('#offerFrom'), btn = $('#checkBtn'), result = $('#result');
+  var emptyHTML = result.innerHTML;
+  ta.addEventListener('input', function () {
+    $('#charCount').textContent = ta.value.length + ' characters';
+    if (ta.value.trim().length >= 40) $('#textField').classList.remove('err');
+  });
+  $$('[data-sample]').forEach(function (b) { b.addEventListener('click', function () {
+    var s = SAMPLES[b.dataset.sample]; ta.value = s.text; from.value = s.from;
+    ta.dispatchEvent(new Event('input')); ta.focus();
+  }); });
+  function escapeHTML(s) { return s.replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function analyse(text) {
+    var hits = [], ranges = [];
+    CHECKS.forEach(function (c) {
+      c.re.lastIndex = 0; var m, first = null;
+      while ((m = c.re.exec(text))) {
+        var s = m.index, e = s + m[0].trim().length;
+        if (!ranges.some(function (r) { return s < r.e && e > r.s; })) ranges.push({ s: s, e: e, sev: c.sev });
+        if (!first) first = m[0].trim();
+        if (m[0].length === 0) c.re.lastIndex++;
+      }
+      if (first) hits.push({ c: c, q: first });
+    });
+    ranges.sort(function (a, b) { return a.s - b.s; });
+    var high = hits.some(function (h) { return h.c.sev === 'high'; });
+    var level = high || hits.length >= 3 ? 'high' : hits.length ? 'warn' : 'ok';
+    return { hits: hits, ranges: ranges, level: level };
+  }
+  function highlight(text, ranges) {
+    var out = '', i = 0;
+    ranges.forEach(function (r) { out += escapeHTML(text.slice(i, r.s)) + '<mark' + (r.sev === 'warn' ? ' class="warn"' : '') + '>' + escapeHTML(text.slice(r.s, r.e)) + '</mark>'; i = r.e; });
+    return out + escapeHTML(text.slice(i));
+  }
+  var LABEL = { high: ['chip-high', 'High risk'], warn: ['chip-warn', 'Has warning signs'], ok: ['chip-ok', 'Looks consistent with genuine postings'] };
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (btn.classList.contains('pending')) return;
+    var text = ta.value.trim();
+    if (text.length < 40) { $('#textField').classList.add('err'); ta.focus(); return; }
+    btn.classList.add('pending'); btn.disabled = true; btn.querySelector('.lbl').textContent = 'Checking…';
+    result.innerHTML = '<div class="skel" aria-label="Checking"><i style="width:40%;height:28px"></i><i></i><i style="width:92%"></i><i style="width:80%"></i><i style="width:60%"></i><i style="height:56px"></i><i style="height:56px"></i></div>';
+    setTimeout(function () {
+      var full = text + (from.value.trim() ? '\n' + from.value.trim() : '');
+      var a = analyse(full), lab = LABEL[a.level];
+      var html = '<div class="result-head"><span class="chip ' + lab[0] + '" style="height:32px;font-size:13px"><span class="dot"></span>' + lab[1] + '</span><span class="fine">' + a.hits.length + ' warning sign' + (a.hits.length === 1 ? '' : 's') + ' · concept rules only</span></div>';
+      html += '<div class="result-text">' + highlight(full, a.ranges) + '</div>';
+      if (a.hits.length) {
+        html += '<ul class="result-flags">' + a.hits.map(function (h) { return '<li><span class="chip ' + (h.c.sev === 'high' ? 'chip-high' : 'chip-warn') + '">' + (h.c.sev === 'high' ? 'High' : 'Warn') + '</span><span>' + h.c.t + '<br><q>' + escapeHTML(h.q) + '</q></span></li>'; }).join('') + '</ul>';
+      } else {
+        html += '<p style="color:var(--ink-2)">None of the concept rules fired. That does not make it safe. Still check the company\'s careers page and the sender\'s email domain.</p>';
+      }
+      html += '<p class="fine"><strong>You decide.</strong> Never pay to get a job. If you already paid, call <a href="tel:1930" style="color:var(--accent)">1930</a>.</p>';
+      result.innerHTML = html;
+      spring({ from: 0, to: 1, stiffness: 280, damping: 20, onUpdate: function (p) { result.style.transform = 'translateY(' + ((1 - p) * 10).toFixed(2) + 'px)'; } });
+      var rr = result.getBoundingClientRect();
+      if (rr.top > window.innerHeight * 0.6) result.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'start' });
+      btn.classList.remove('pending'); btn.disabled = false; btn.querySelector('.lbl').textContent = 'Check this offer';
+    }, 900);
+  });
+  form.addEventListener('reset', function () { result.innerHTML = emptyHTML; });
+
+  /* ---------- FAQ tabs ---------- */
+  var tabs = $$('[role="tab"]');
+  function activate(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
+      $('#' + t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { activate(t); });
+    t.addEventListener('keydown', function (e) {
+      var n = null;
+      if (e.key === 'ArrowRight') n = tabs[(i + 1) % tabs.length];
+      if (e.key === 'ArrowLeft') n = tabs[(i - 1 + tabs.length) % tabs.length];
+      if (e.key === 'Home') n = tabs[0];
+      if (e.key === 'End') n = tabs[tabs.length - 1];
+      if (n) { e.preventDefault(); activate(n, true); }
+    });
+  });
+
+  /* ---------- Token swatches ---------- */
+  var SW = [['--paper', 'Paper', 'base'], ['--canvas', 'Canvas', 'alt sections'], ['--ink', 'Ink green', 'text, primary'], ['--ink-2', 'Ink 2', 'body copy'], ['--line', 'Line', 'borders'], ['--accent', 'Annotation blue', 'the one accent'], ['--high', 'High risk', 'semantic only'], ['--warn', 'Warning', 'semantic only'], ['--ok', 'Consistent', 'semantic only'], ['--warn-mark', 'Marker', 'highlights']];
+  function renderSwatches() {
+    var cs = getComputedStyle(root);
+    $('#swatches').innerHTML = SW.map(function (s) { var v = cs.getPropertyValue(s[0]).trim(); return '<div class="sw"><i style="background:var(' + s[0] + ')"></i><div><b>' + s[1] + '</b>' + v + '<br>' + s[2] + '</div></div>'; }).join('');
+  }
+  renderSwatches();
+})();
+</script>
+</body>
+</html>
