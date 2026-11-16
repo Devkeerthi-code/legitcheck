@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LegitCheck</title>
+<link rel="stylesheet" href="popup.css">
+<script type="module" src="popup.js"></script>
+</head>
+<body>
+<div class="popup">
+  <header class="top">
+    <span class="logo">
+      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--ink)"/><rect x="8" y="9" width="16" height="2.5" rx="1.25" fill="var(--paper)" opacity=".55"/><rect x="6.5" y="14.2" width="19" height="4.2" rx="1.4" fill="#FFDF9E"/><rect x="8" y="21" width="11" height="2.5" rx="1.25" fill="var(--paper)" opacity=".55"/></svg>
+      LegitCheck
+    </span>
+    <span class="top-right">
+      <span class="site" id="site"></span>
+      <button class="theme" type="button" id="theme" aria-label="Switch to dark mode">
+        <svg class="icon sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="icon moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/></svg>
+      </button>
+    </span>
+  </header>
+  <main class="body" id="body" aria-live="polite" aria-busy="true">
+    <div class="skel" aria-label="Checking"><i style="width:40%"></i><i></i><i style="width:85%"></i></div>
+  </main>
+  <footer class="foot">
+    <span><svg class="icon lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg> Only the text you chose. Not stored.</span>
+    <a href="tel:1930">Paid? Call 1930</a>
+  </footer>
+</div>
+</body>
+</html>

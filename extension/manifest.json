@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "LegitCheck: internship and job offer checker",
+  "short_name": "LegitCheck",
+  "version": "1.0.0",
+  "description": "Select an internship or job offer, right-click and see its warning signs with the exact words that triggered them. You decide.",
+  "minimum_chrome_version": "116",
+  "permissions": ["activeTab", "contextMenus", "scripting"],
+  "host_permissions": ["http://127.0.0.1:8000/*", "http://localhost:8000/*"],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Check this offer with LegitCheck",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
