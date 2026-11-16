@@ -1,0 +1,24 @@
+[project]
+name = "legitcheck"
+version = "1.0.0"
+description = "Detects likely fake internship and job offers and explains the warning signs."
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+include = ["legitcheck*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["web", "extension", "design-concept", "docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# Example messages are kept on one line each so they read like the original message.
+"data/synthetic/*.py" = ["E501"]
