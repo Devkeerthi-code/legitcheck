@@ -300,6 +300,11 @@ to `ALLOWED_ORIGINS`.
 - OCR for screenshots: most scam offers arrive as WhatsApp images.
 - A "report this as wrong" button that stores only the verdict and the user's label.
 
+## FAQ
+
+**Does a "low risk" verdict mean the offer is safe?** No. It means LegitCheck found none of
+the warning signs it knows. Still check the company on its official site.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
