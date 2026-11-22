@@ -340,6 +340,9 @@ charge to get a job. Real employers pay you, not the other way round.
 **Why is Telegram-only contact flagged?** Real HR teams share an official email and phone
 number. Scammers prefer Telegram because accounts are cheap and anonymous.
 
+**Why does it flag early Aadhaar or PAN requests?** Identity documents belong in onboarding
+after an offer letter, not in the first message.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
