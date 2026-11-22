@@ -7,3 +7,4 @@
 - Calibrated ML model trained on EMSCAD, with an evaluation and error-analysis report.
 - FastAPI service with `/check` and `/health`, and anonymous daily usage counts.
 - Next.js web app with highlighted reasons and a verification checklist.
+- Chrome extension that checks selected text or the current page.
