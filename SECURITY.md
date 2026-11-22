@@ -7,3 +7,7 @@ instead of a public issue.
 
 The FastAPI service, the web app and the Chrome extension. The extension only reads a page
 when you click it.
+
+## Secrets
+
+API keys are read from `.env`, which is git-ignored. See `.env.example` for every variable.
