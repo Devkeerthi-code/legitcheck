@@ -17,3 +17,8 @@ ruff check . && ruff format --check .
 pytest
 cd web && npm run lint && npm test && npm run build
 ```
+
+## Adding a rule
+
+Rules live in `legitcheck/rules/`. Each rule returns the exact phrase it matched, so the UI
+can highlight it. Add positive and negative test cases to `tests/test_rules.py`.
