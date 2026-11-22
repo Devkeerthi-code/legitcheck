@@ -329,6 +329,8 @@ list.
 **How do I report a wrong verdict?** Open an issue with the "Wrong verdict" template and
 remove personal details first.
 
+**Which Python and Node versions?** Python 3.12 and Node 22, the same as CI.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
