@@ -25,3 +25,7 @@ def test_registered_domain_keeps_two_part_suffix():
 
 def test_registered_domain_leaves_bare_domain():
     assert links.registered_domain("tcs.com") == "tcs.com"
+
+
+def test_lookalike_brand_flags_hyphenated_brand():
+    assert links.lookalike_brand("tcs-hiring.in") == "tcs"
