@@ -343,6 +343,9 @@ number. Scammers prefer Telegram because accounts are cheap and anonymous.
 **Why does it flag early Aadhaar or PAN requests?** Identity documents belong in onboarding
 after an offer letter, not in the first message.
 
+**Can I use the API from my own app?** Yes. Send `POST /check` with JSON `{"text": "..."}`.
+See `/docs` on the running API for the full schema.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
