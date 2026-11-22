@@ -337,6 +337,9 @@ Indian patterns, like UPI fee requests, that the model has never seen.
 **What does "check before paying" mean in practice?** Never pay a fee, deposit or training
 charge to get a job. Real employers pay you, not the other way round.
 
+**Why is Telegram-only contact flagged?** Real HR teams share an official email and phone
+number. Scammers prefer Telegram because accounts are cheap and anonymous.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
