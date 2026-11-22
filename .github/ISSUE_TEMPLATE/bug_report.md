@@ -13,3 +13,5 @@ labels: bug
 **Expected:**
 
 **Actual:**
+
+**Browser and device:**
