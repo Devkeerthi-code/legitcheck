@@ -29,3 +29,7 @@ def test_registered_domain_leaves_bare_domain():
 
 def test_lookalike_brand_flags_hyphenated_brand():
     assert links.lookalike_brand("tcs-hiring.in") == "tcs"
+
+
+def test_lookalike_brand_flags_brand_on_odd_tld():
+    assert links.lookalike_brand("amazon-jobs.xyz") == "amazon"
