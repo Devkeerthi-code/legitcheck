@@ -9,3 +9,7 @@ def test_levenshtein_identical_and_empty():
     assert links.levenshtein("abc", "abc") == 0
     assert links.levenshtein("", "") == 0
     assert links.levenshtein("a", "") == 1
+
+
+def test_levenshtein_is_symmetric():
+    assert links.levenshtein("flaw", "lawn") == links.levenshtein("lawn", "flaw") == 2
