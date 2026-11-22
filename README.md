@@ -305,6 +305,9 @@ to `ALLOWED_ORIGINS`.
 **Does a "low risk" verdict mean the offer is safe?** No. It means LegitCheck found none of
 the warning signs it knows. Still check the company on its official site.
 
+**Does it work on Hinglish messages?** Yes, the fee and payment rules include common
+Hinglish phrasing such as "registration fees jama karna hoga".
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
