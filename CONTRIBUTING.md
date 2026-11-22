@@ -35,3 +35,7 @@ Use conventional prefixes: `feat:`, `fix:`, `docs:`, `test:`, `chore:`, `style:`
 ## Reporting scams
 
 Found an offer scam? Use the "Wrong verdict" or "New scam pattern" issue template.
+
+## Code style
+
+Python follows ruff defaults. TypeScript follows the ESLint config in `web/`. Keep functions small.
