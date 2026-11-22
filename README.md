@@ -331,6 +331,9 @@ remove personal details first.
 
 **Which Python and Node versions?** Python 3.12 and Node 22, the same as CI.
 
+**Why not just use the ML model?** It was trained on English US postings. The rules cover
+Indian patterns, like UPI fee requests, that the model has never seen.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
