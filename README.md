@@ -314,6 +314,9 @@ The key only enables the language selector.
 **Why does a Gmail address count as a warning sign?** Real companies recruit from their
 own domain. A free-mail "HR team" is one of the most common signs of a fake offer.
 
+**Why does it flag a domain like `tcs-hiring.in`?** It contains a known brand name but is
+not the brand's official domain, which is how lookalike sites are built.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
