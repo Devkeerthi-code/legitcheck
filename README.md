@@ -317,6 +317,9 @@ own domain. A free-mail "HR team" is one of the most common signs of a fake offe
 **Why does it flag a domain like `tcs-hiring.in`?** It contains a known brand name but is
 not the brand's official domain, which is how lookalike sites are built.
 
+**Can it read screenshots?** Not yet. Paste the text instead. OCR is on the improvement
+list.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
