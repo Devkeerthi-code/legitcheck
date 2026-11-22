@@ -22,3 +22,8 @@ cd web && npm run lint && npm test && npm run build
 
 Rules live in `legitcheck/rules/`. Each rule returns the exact phrase it matched, so the UI
 can highlight it. Add positive and negative test cases to `tests/test_rules.py`.
+
+## Example data
+
+Every company, email, phone number and link in examples must be made up. Never paste a real
+person's offer letter into the repo.
