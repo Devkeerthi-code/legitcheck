@@ -31,3 +31,7 @@ person's offer letter into the repo.
 ## Commit messages
 
 Use conventional prefixes: `feat:`, `fix:`, `docs:`, `test:`, `chore:`, `style:`.
+
+## Reporting scams
+
+Found an offer scam? Use the "Wrong verdict" or "New scam pattern" issue template.
