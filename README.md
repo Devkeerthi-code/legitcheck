@@ -326,6 +326,9 @@ list.
 **Where does the Chrome extension send the text?** Only to the LegitCheck API set in
 `extension/config.js`, and only when you ask it to check something.
 
+**How do I report a wrong verdict?** Open an issue with the "Wrong verdict" template and
+remove personal details first.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
