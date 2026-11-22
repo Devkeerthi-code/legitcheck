@@ -308,6 +308,9 @@ the warning signs it knows. Still check the company on its official site.
 **Does it work on Hinglish messages?** Yes, the fee and payment rules include common
 Hinglish phrasing such as "registration fees jama karna hoga".
 
+**Do I need a Gemini key?** No. Without one, the explanations come from the rule engine.
+The key only enables the language selector.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
