@@ -13,3 +13,7 @@ def test_levenshtein_identical_and_empty():
 
 def test_levenshtein_is_symmetric():
     assert links.levenshtein("flaw", "lawn") == links.levenshtein("lawn", "flaw") == 2
+
+
+def test_registered_domain_strips_subdomain():
+    assert links.registered_domain("jobs.infosys.com") == "infosys.com"
