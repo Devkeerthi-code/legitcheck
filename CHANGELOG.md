@@ -5,3 +5,4 @@
 - Rule engine for Indian offer-scam patterns: fees, deposits, UPI requests, Telegram-only HR,
   free-mail recruiters, lookalike brand domains and pressure tactics.
 - Calibrated ML model trained on EMSCAD, with an evaluation and error-analysis report.
+- FastAPI service with `/check` and `/health`, and anonymous daily usage counts.
