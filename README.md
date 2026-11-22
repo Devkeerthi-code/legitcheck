@@ -320,6 +320,9 @@ not the brand's official domain, which is how lookalike sites are built.
 **Can it read screenshots?** Not yet. Paste the text instead. OCR is on the improvement
 list.
 
+**Is the example data real?** No. Every company, email and link in the examples and in
+`data/synthetic/` is made up.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
