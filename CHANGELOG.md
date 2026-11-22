@@ -9,3 +9,4 @@
 - Next.js web app with highlighted reasons and a verification checklist.
 - Chrome extension that checks selected text or the current page.
 - Static demo on GitHub Pages and a CI pipeline with lint, tests and a Docker smoke test.
+- Optional Gemini explanations in other languages, with a rule-based fallback.
