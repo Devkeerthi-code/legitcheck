@@ -349,6 +349,9 @@ See `/docs` on the running API for the full schema.
 **How long can the text be?** Between 20 and 20,000 characters, the same limits the
 extension uses.
 
+**Does it work offline?** The rules and model run on the API, so the API has to be reachable.
+The web app shows an error state if it is not.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
