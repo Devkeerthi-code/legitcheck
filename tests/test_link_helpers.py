@@ -33,3 +33,7 @@ def test_lookalike_brand_flags_hyphenated_brand():
 
 def test_lookalike_brand_flags_brand_on_odd_tld():
     assert links.lookalike_brand("amazon-jobs.xyz") == "amazon"
+
+
+def test_lookalike_brand_ignores_official_domain():
+    assert links.lookalike_brand("wipro.com") is None
