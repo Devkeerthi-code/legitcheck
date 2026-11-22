@@ -21,3 +21,7 @@ def test_registered_domain_strips_subdomain():
 
 def test_registered_domain_keeps_two_part_suffix():
     assert links.registered_domain("a.b.co.in") == "b.co.in"
+
+
+def test_registered_domain_leaves_bare_domain():
+    assert links.registered_domain("tcs.com") == "tcs.com"
