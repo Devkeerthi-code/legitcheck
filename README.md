@@ -355,6 +355,9 @@ The web app shows an error state if it is not.
 **How accurate is it?** See `reports/evaluation.md` for precision, recall and calibration on
 the held-out test set.
 
+**Can I add a new warning sign?** Yes. Open an issue with the "New scam pattern" template, or
+follow `CONTRIBUTING.md` to add a rule.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
