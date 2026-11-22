@@ -352,6 +352,9 @@ extension uses.
 **Does it work offline?** The rules and model run on the API, so the API has to be reachable.
 The web app shows an error state if it is not.
 
+**How accurate is it?** See `reports/evaluation.md` for precision, recall and calibration on
+the held-out test set.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
