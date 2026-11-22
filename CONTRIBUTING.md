@@ -27,3 +27,7 @@ can highlight it. Add positive and negative test cases to `tests/test_rules.py`.
 
 Every company, email, phone number and link in examples must be made up. Never paste a real
 person's offer letter into the repo.
+
+## Commit messages
+
+Use conventional prefixes: `feat:`, `fix:`, `docs:`, `test:`, `chore:`, `style:`.
