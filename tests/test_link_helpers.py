@@ -17,3 +17,7 @@ def test_levenshtein_is_symmetric():
 
 def test_registered_domain_strips_subdomain():
     assert links.registered_domain("jobs.infosys.com") == "infosys.com"
+
+
+def test_registered_domain_keeps_two_part_suffix():
+    assert links.registered_domain("a.b.co.in") == "b.co.in"
