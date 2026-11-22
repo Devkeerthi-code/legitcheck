@@ -39,3 +39,7 @@ Found an offer scam? Use the "Wrong verdict" or "New scam pattern" issue templat
 ## Code style
 
 Python follows ruff defaults. TypeScript follows the ESLint config in `web/`. Keep functions small.
+
+## Tests
+
+Every new rule needs a test that fires and a test that does not, so false alarms stay low.
