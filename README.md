@@ -334,6 +334,9 @@ remove personal details first.
 **Why not just use the ML model?** It was trained on English US postings. The rules cover
 Indian patterns, like UPI fee requests, that the model has never seen.
 
+**What does "check before paying" mean in practice?** Never pay a fee, deposit or training
+charge to get a job. Real employers pay you, not the other way round.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
