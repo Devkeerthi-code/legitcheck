@@ -311,6 +311,9 @@ Hinglish phrasing such as "registration fees jama karna hoga".
 **Do I need a Gemini key?** No. Without one, the explanations come from the rule engine.
 The key only enables the language selector.
 
+**Why does a Gmail address count as a warning sign?** Real companies recruit from their
+own domain. A free-mail "HR team" is one of the most common signs of a fake offer.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
