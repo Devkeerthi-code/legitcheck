@@ -323,6 +323,9 @@ list.
 **Is the example data real?** No. Every company, email and link in the examples and in
 `data/synthetic/` is made up.
 
+**Where does the Chrome extension send the text?** Only to the LegitCheck API set in
+`extension/config.js`, and only when you ask it to check something.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
