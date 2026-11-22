@@ -362,6 +362,8 @@ follow `CONTRIBUTING.md` to add a rule.
 
 ## Repo
 
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and [CHANGELOG.md](CHANGELOG.md).
+
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
 Rules for Indian patterns, a calibrated ML model, a FastAPI API, a Next.js app and a Chrome
 extension.
