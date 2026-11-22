@@ -346,6 +346,9 @@ after an offer letter, not in the first message.
 **Can I use the API from my own app?** Yes. Send `POST /check` with JSON `{"text": "..."}`.
 See `/docs` on the running API for the full schema.
 
+**How long can the text be?** Between 20 and 20,000 characters, the same limits the
+extension uses.
+
 ## Repo
 
 **About (GitHub description):** Checks internship and job offers for scam warning signs.
