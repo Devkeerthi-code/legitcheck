@@ -11,3 +11,7 @@ when you click it.
 ## Secrets
 
 API keys are read from `.env`, which is git-ignored. See `.env.example` for every variable.
+
+## Data
+
+The API keeps only daily usage counts. Do not include personal data in bug reports.
