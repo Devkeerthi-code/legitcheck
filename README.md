@@ -4,7 +4,7 @@
 warning signs, such as registration fees, Telegram-only HR, Gmail "recruiters" and early Aadhaar
 requests. It shows the exact phrase behind each one and leaves the decision to you.
 
-**Live demo:** TODO: add the Vercel / GitHub Pages link after deploying ·
+**Live demo:** [devkeerthi-code.github.io/legitcheck](https://devkeerthi-code.github.io/legitcheck/) (checks need the API below to be deployed) ·
 **API docs:** TODO: add `https://<your-api>/docs` ·
 **Model card:** [MODEL_CARD.md](MODEL_CARD.md) · **Evaluation:** [reports/evaluation.md](reports/evaluation.md)
 
